@@ -6,12 +6,14 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  fullWidth?: boolean;
 }
 
-export default function SearchBar({ value, onChange, placeholder = 'Search...' }: Props) {
+export default function SearchBar({ value, onChange, placeholder = 'Search...', fullWidth = true }: Props) {
   return (
     <TextField
       size="small"
+      fullWidth={fullWidth}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
@@ -22,7 +24,6 @@ export default function SearchBar({ value, onChange, placeholder = 'Search...' }
           </InputAdornment>
         ),
       }}
-      sx={{ minWidth: 260 }}
     />
   );
 }

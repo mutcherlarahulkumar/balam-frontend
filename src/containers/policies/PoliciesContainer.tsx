@@ -59,7 +59,9 @@ export default function PoliciesContainer() {
         action={{ label: 'Add Policy', onClick: () => setDrawerOpen(true) }}
       />
       <Box display="flex" gap={1.5} mb={2} flexWrap="wrap" alignItems="center">
-        <SearchBar value={search} onChange={setSearch} placeholder="Search policy..." />
+        <Box flex={1} minWidth={160}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search policy..." />
+        </Box>
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>Status</InputLabel>
           <Select
@@ -134,7 +136,7 @@ export default function PoliciesContainer() {
                     {p.daysUntilLapse < 90 && (
                       <Box mt={1.5}>
                         <Chip
-                          label={`⚠ Lapses in ${p.daysUntilLapse} days`}
+                          label={`Lapses in ${p.daysUntilLapse} days`}
                           size="small"
                           color={p.daysUntilLapse < 30 ? 'error' : 'warning'}
                           sx={{ width: '100%' }}

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Card, CardContent, Typography, Box, TextField, Button, Grid, Divider, Alert,
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
 import { useQuery } from '@tanstack/react-query';
 import { gstApi } from '@/api/gst.api';
 import { commissionApi } from '@/api/commission.api';
@@ -33,15 +32,23 @@ export default function GSTContainer() {
     if (!isNaN(no) && !isNaN(yr)) setSubmitted({ policyNo: no, premiumYear: yr });
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') handleCalculate();
+  }
+
   return (
     <>
-      <PageHeader title="GST & Commission Calculator" subtitle="Calculate GST and estimated commission for any policy" />
+      <PageHeader
+        title="GST and Commission Calculator"
+        subtitle="Calculate GST and estimated commission for any policy"
+      />
 
-      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
-        <strong>Current rule (post 22 Sep 2025):</strong> 0% GST on all individual LIC policies. Historical rates shown for reference.
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <strong>Current rule (post 22 Sep 2025):</strong> 0% GST on all individual LIC policies.
+        Historical rates shown for reference.
       </Alert>
 
-      <Card sx={{ mb: 3, maxWidth: 480 }}>
+      <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" fontWeight={600} mb={2}>Calculate</Typography>
           <Grid container spacing={2}>
@@ -52,6 +59,8 @@ export default function GSTContainer() {
                 fullWidth
                 value={policyNo}
                 onChange={(e) => setPolicyNo(e.target.value)}
+                onKeyDown={handleKeyDown}
+                inputProps={{ min: 1 }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -61,11 +70,20 @@ export default function GSTContainer() {
                 fullWidth
                 value={premiumYear}
                 onChange={(e) => setPremiumYear(e.target.value)}
+                onKeyDown={handleKeyDown}
                 helperText="1 = first year, 2 = renewal..."
+                inputProps={{ min: 1 }}
               />
             </Grid>
           </Grid>
-          <Button variant="contained" sx={{ mt: 2 }} onClick={handleCalculate} disabled={!policyNo}>
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 2, minHeight: 44 }}
+            onClick={handleCalculate}
+            disabled={!policyNo}
+          >
             Calculate
           </Button>
         </CardContent>
@@ -79,16 +97,25 @@ export default function GSTContainer() {
             <Card>
               <CardContent>
                 <Typography variant="h6" fontWeight={600} mb={2}>GST Breakdown</Typography>
-                {[
-                  ['Policy No.', gst.policyNo],
-                  ['Plan No.', gst.planNo],
-                  ['Plan Type', gst.planType],
-                  ['Base Premium', formatCurrency(gst.basePremium)],
-                  ['GST Rate', `${gst.gstRate}%`],
-                  ['GST Amount', formatCurrency(gst.gstAmount)],
-                  ['Total Premium', formatCurrency(gst.totalPremium)],
-                ].map(([label, value]) => (
-                  <Box key={String(label)} display="flex" justifyContent="space-between" py={0.75} borderBottom="1px solid" borderColor="divider">
+                {(
+                  [
+                    ['Policy No.', gst.policyNo],
+                    ['Plan No.', gst.planNo],
+                    ['Plan Type', gst.planType],
+                    ['Base Premium', formatCurrency(gst.basePremium)],
+                    ['GST Rate', `${gst.gstRate}%`],
+                    ['GST Amount', formatCurrency(gst.gstAmount)],
+                    ['Total Premium', formatCurrency(gst.totalPremium)],
+                  ] as [string, string | number][]
+                ).map(([label, value]) => (
+                  <Box
+                    key={String(label)}
+                    display="flex"
+                    justifyContent="space-between"
+                    py={0.75}
+                    borderBottom="1px solid"
+                    borderColor="divider"
+                  >
                     <Typography variant="body2" color="text.secondary">{label}</Typography>
                     <Typography variant="body2" fontWeight={600}>{String(value)}</Typography>
                   </Box>
@@ -96,7 +123,9 @@ export default function GSTContainer() {
                 <Divider sx={{ my: 1.5 }} />
                 <Typography variant="caption" color="text.secondary">{gst.regulation}</Typography>
                 {gst.historicalNote && (
-                  <Typography variant="caption" color="text.disabled" display="block" mt={0.5}>{gst.historicalNote}</Typography>
+                  <Typography variant="caption" color="text.disabled" display="block" mt={0.5}>
+                    {gst.historicalNote}
+                  </Typography>
                 )}
               </CardContent>
             </Card>
@@ -107,13 +136,22 @@ export default function GSTContainer() {
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} mb={2}>Commission Estimate</Typography>
-                  {[
-                    ['Base Commission %', `${commission.baseCommissionPct}%`],
-                    ['Bonus Commission %', `${commission.bonusCommissionPct}%`],
-                    ['Total %', `${commission.totalPct}%`],
-                    ['Estimated Commission', formatCurrency(commission.estimatedCommission)],
-                  ].map(([label, value]) => (
-                    <Box key={String(label)} display="flex" justifyContent="space-between" py={0.75} borderBottom="1px solid" borderColor="divider">
+                  {(
+                    [
+                      ['Base Commission %', `${commission.baseCommissionPct}%`],
+                      ['Bonus Commission %', `${commission.bonusCommissionPct}%`],
+                      ['Total %', `${commission.totalPct}%`],
+                      ['Estimated Commission', formatCurrency(commission.estimatedCommission)],
+                    ] as [string, string][]
+                  ).map(([label, value]) => (
+                    <Box
+                      key={String(label)}
+                      display="flex"
+                      justifyContent="space-between"
+                      py={0.75}
+                      borderBottom="1px solid"
+                      borderColor="divider"
+                    >
                       <Typography variant="body2" color="text.secondary">{label}</Typography>
                       <Typography variant="body2" fontWeight={600}>{String(value)}</Typography>
                     </Box>

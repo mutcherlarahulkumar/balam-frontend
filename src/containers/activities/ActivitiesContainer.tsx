@@ -32,7 +32,8 @@ export default function ActivitiesContainer() {
   function handleSubmit(formData: ActivityFormData) {
     createActivity.mutate(formData, {
       onSuccess: () => { toast.success('Activity logged'); setDrawerOpen(false); },
-      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+      onError: (err: any) =>
+        toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
     });
   }
 
@@ -48,15 +49,20 @@ export default function ActivitiesContainer() {
         subtitle="Log and track client interactions"
         action={{ label: 'Log Activity', onClick: () => setDrawerOpen(true) }}
       />
+
       {!activities.length ? (
-        <EmptyState title="No activities" message="Log your first client activity." action={{ label: 'Log Activity', onClick: () => setDrawerOpen(true) }} />
+        <EmptyState
+          title="No activities"
+          message="Log your first client activity."
+          action={{ label: 'Log Activity', onClick: () => setDrawerOpen(true) }}
+        />
       ) : isMobile ? (
         <Grid container spacing={1.5}>
           {activities.map((a) => (
             <Grid item xs={12} key={a.id}>
               <Card>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                     <Chip label={a.activityType} size="small" variant="outlined" />
                     <Chip
                       label={a.status}
@@ -68,8 +74,16 @@ export default function ActivitiesContainer() {
                   <Grid container spacing={1}>
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Date</Typography>
-                      <Typography variant="body2" fontWeight={600}>{formatDate(a.activityDate)}</Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {formatDate(a.activityDate)}
+                      </Typography>
                     </Grid>
+                    {a.activityTime && (
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary">Time</Typography>
+                        <Typography variant="body2">{a.activityTime}</Typography>
+                      </Grid>
+                    )}
                     {a.reminderDate && (
                       <Grid item xs={6}>
                         <Typography variant="caption" color="text.secondary">Reminder</Typography>
@@ -87,26 +101,46 @@ export default function ActivitiesContainer() {
           ))}
         </Grid>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Table>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+        >
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Type</TableCell>
                 <TableCell>Date</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Time</TableCell>
                 <TableCell>Details</TableCell>
-                <TableCell>Reminder</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Reminder</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {activities.map((a) => (
                 <TableRow key={a.id} hover>
-                  <TableCell><Chip label={a.activityType} size="small" variant="outlined" /></TableCell>
-                  <TableCell>{formatDate(a.activityDate)}</TableCell>
-                  <TableCell>{a.details || '—'}</TableCell>
-                  <TableCell>{a.reminderDate ? formatDate(a.reminderDate) : '—'}</TableCell>
                   <TableCell>
-                    <Chip label={a.status} size="small" color={STATUS_COLOR[a.status as ActivityStatus] ?? 'default'} />
+                    <Chip label={a.activityType} size="small" variant="outlined" />
+                  </TableCell>
+                  <TableCell>{formatDate(a.activityDate)}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                    {a.activityTime || '—'}
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
+                      {a.details || '—'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                    {a.reminderDate ? formatDate(a.reminderDate) : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={a.status}
+                      size="small"
+                      color={STATUS_COLOR[a.status as ActivityStatus] ?? 'default'}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -114,8 +148,17 @@ export default function ActivitiesContainer() {
           </Table>
         </TableContainer>
       )}
-      <FormDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Log Activity">
-        <ActivityForm onSubmit={handleSubmit} loading={createActivity.isPending} onCancel={() => setDrawerOpen(false)} />
+
+      <FormDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Log Activity"
+      >
+        <ActivityForm
+          onSubmit={handleSubmit}
+          loading={createActivity.isPending}
+          onCancel={() => setDrawerOpen(false)}
+        />
       </FormDrawer>
     </>
   );

@@ -75,14 +75,25 @@ export default function SBContainer() {
         subtitle="Track money-back and survival benefit payouts"
         action={{ label: 'Add SB', onClick: () => setDrawerOpen(true) }}
       />
+
       <Box mb={2}>
         <FormControlLabel
-          control={<Switch checked={unpaidOnly} onChange={(e) => setUnpaidOnly(e.target.checked)} />}
+          control={
+            <Switch
+              checked={unpaidOnly}
+              onChange={(e) => setUnpaidOnly(e.target.checked)}
+            />
+          }
           label="Show unpaid only"
         />
       </Box>
+
       {!records.length ? (
-        <EmptyState title="No SB records" message="Add survival benefit records." action={{ label: 'Add SB', onClick: () => setDrawerOpen(true) }} />
+        <EmptyState
+          title="No SB records"
+          message="Add survival benefit records."
+          action={{ label: 'Add SB', onClick: () => setDrawerOpen(true) }}
+        />
       ) : isMobile ? (
         <Grid container spacing={1.5}>
           {records.map((sb) => (
@@ -91,7 +102,12 @@ export default function SBContainer() {
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Box flex={1} minWidth={0}>
-                      <Typography variant="subtitle1" fontWeight={700} sx={{ fontFamily: 'monospace' }} noWrap>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={700}
+                        sx={{ fontFamily: 'monospace' }}
+                        noWrap
+                      >
                         {sb.policyNo}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -112,7 +128,9 @@ export default function SBContainer() {
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Amount</Typography>
-                      <Typography variant="body2" fontWeight={700} color="primary">{formatCurrency(sb.sbAmount)}</Typography>
+                      <Typography variant="body2" fontWeight={700} color="primary">
+                        {formatCurrency(sb.sbAmount)}
+                      </Typography>
                     </Grid>
                     {sb.sbPayDate && (
                       <>
@@ -135,7 +153,8 @@ export default function SBContainer() {
                         fullWidth
                         variant="contained"
                         color="success"
-                        size="small"
+                        size="large"
+                        sx={{ minHeight: 44 }}
                         onClick={() => { setMarkingPaid(sb); markPaidFormik.resetForm(); }}
                       >
                         Mark as Received
@@ -148,16 +167,20 @@ export default function SBContainer() {
           ))}
         </Grid>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Table>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+        >
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Policy No.</TableCell>
                 <TableCell>SB Due Date</TableCell>
                 <TableCell align="right">SB Amount</TableCell>
                 <TableCell>Instalment No.</TableCell>
-                <TableCell>Pay Date</TableCell>
-                <TableCell>Cheque No.</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Pay Date</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Cheque No.</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="center">Action</TableCell>
               </TableRow>
@@ -169,8 +192,12 @@ export default function SBContainer() {
                   <TableCell>{formatDate(sb.sbDueDate)}</TableCell>
                   <TableCell align="right">{formatCurrency(sb.sbAmount)}</TableCell>
                   <TableCell>{sb.instalmentNo}</TableCell>
-                  <TableCell>{formatDate(sb.sbPayDate) || '—'}</TableCell>
-                  <TableCell>{sb.chequeNo || '—'}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                    {formatDate(sb.sbPayDate) || '—'}
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                    {sb.chequeNo || '—'}
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={sb.sbPayDate ? 'Received' : 'Pending'}
@@ -180,7 +207,13 @@ export default function SBContainer() {
                   </TableCell>
                   <TableCell align="center">
                     {!sb.sbPayDate && (
-                      <Button size="small" variant="outlined" color="success" onClick={() => { setMarkingPaid(sb); markPaidFormik.resetForm(); }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        sx={{ minHeight: 44 }}
+                        onClick={() => { setMarkingPaid(sb); markPaidFormik.resetForm(); }}
+                      >
                         Mark Paid
                       </Button>
                     )}
@@ -192,33 +225,84 @@ export default function SBContainer() {
         </TableContainer>
       )}
 
-      <FormDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add Survival Benefit">
-        <SBForm onSubmit={handleCreateSubmit} loading={createSB.isPending} onCancel={() => setDrawerOpen(false)} />
+      <FormDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Add Survival Benefit"
+      >
+        <SBForm
+          onSubmit={handleCreateSubmit}
+          loading={createSB.isPending}
+          onCancel={() => setDrawerOpen(false)}
+        />
       </FormDrawer>
 
-      <Dialog open={!!markingPaid} onClose={() => setMarkingPaid(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Mark SB as Received — Policy {markingPaid?.policyNo}</DialogTitle>
+      <Dialog
+        open={!!markingPaid}
+        onClose={() => setMarkingPaid(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, mx: { xs: 2, sm: 'auto' } } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Mark SB as Received — Policy {markingPaid?.policyNo}
+        </DialogTitle>
         <DialogContent>
-          <Box component="form" id="sb-paid-form" onSubmit={markPaidFormik.handleSubmit} display="flex" flexDirection="column" gap={2} pt={1}>
+          <Box
+            component="form"
+            id="sb-paid-form"
+            onSubmit={markPaidFormik.handleSubmit}
+            display="flex"
+            flexDirection="column"
+            gap={2}
+            pt={1}
+          >
             <TextField
-              label="Paid Date *" type="date" fullWidth InputLabelProps={{ shrink: true }}
-              id="paidDate" name="paidDate"
+              label="Paid Date *"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              id="paidDate"
+              name="paidDate"
               value={markPaidFormik.values.paidDate}
-              onChange={markPaidFormik.handleChange} onBlur={markPaidFormik.handleBlur}
+              onChange={markPaidFormik.handleChange}
+              onBlur={markPaidFormik.handleBlur}
               error={markPaidFormik.touched.paidDate && Boolean(markPaidFormik.errors.paidDate)}
               helperText={markPaidFormik.touched.paidDate && markPaidFormik.errors.paidDate}
             />
             <TextField
-              label="Cheque No. (optional)" fullWidth
-              id="chequeNo" name="chequeNo"
+              label="Cheque No. (optional, max 10 chars)"
+              fullWidth
+              id="chequeNo"
+              name="chequeNo"
+              inputProps={{ maxLength: 10 }}
               value={markPaidFormik.values.chequeNo ?? ''}
-              onChange={markPaidFormik.handleChange} onBlur={markPaidFormik.handleBlur}
+              onChange={markPaidFormik.handleChange}
+              onBlur={markPaidFormik.handleBlur}
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setMarkingPaid(null)}>Cancel</Button>
-          <Button type="submit" form="sb-paid-form" variant="contained" color="success" disabled={markPaid.isPending}>
+        <DialogActions
+          sx={{ px: 3, pb: 3, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}
+        >
+          <Button
+            fullWidth
+            onClick={() => setMarkingPaid(null)}
+            size="large"
+            sx={{ minHeight: 44 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="sb-paid-form"
+            variant="contained"
+            color="success"
+            fullWidth
+            size="large"
+            sx={{ minHeight: 44 }}
+            disabled={markPaid.isPending}
+          >
             {markPaid.isPending ? 'Saving...' : 'Confirm'}
           </Button>
         </DialogActions>

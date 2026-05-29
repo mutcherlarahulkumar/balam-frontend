@@ -28,6 +28,7 @@ import AppsIcon from '@mui/icons-material/Apps';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from './Sidebar';
+import BalamLogo from '@/components/common/BalamLogo';
 
 const DRAWER_WIDTH = 256;
 
@@ -97,15 +98,18 @@ export default function AppLayout({ children, title }: Props) {
               <MenuIcon fontSize="medium" />
             </IconButton>
           )}
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', lineHeight: 1.1 }}>
-              {isMobile ? 'Balam' : (title ?? 'Balam CRM')}
-            </Typography>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            {isMobile && <BalamLogo size={32} />}
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', lineHeight: 1.1 }}>
+                {isMobile ? 'Balam' : (title ?? 'Balam CRM')}
+              </Typography>
             {isMobile && title && (
               <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1 }}>
                 {title}
               </Typography>
             )}
+            </Box>
           </Box>
           <Tooltip title="Profile & Sign Out">
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="large">

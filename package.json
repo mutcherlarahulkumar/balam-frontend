@@ -39,6 +39,7 @@
     "@types/react-dom": "^18.3.4",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.18",
+    "sharp": "^0.34.5",
     "typescript": "^5.7.2"
   }
 }

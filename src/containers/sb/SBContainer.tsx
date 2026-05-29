@@ -1,0 +1,130 @@
+import React, { useState } from 'react';
+import {
+  Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer,
+  Box, Chip, Switch, FormControlLabel, Button, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField,
+} from '@mui/material';
+import { useSBList, useCreateSB, useMarkSBPaid } from '@/hooks/useSB';
+import PageHeader from '@/components/common/PageHeader';
+import LoadingState from '@/components/common/LoadingState';
+import ErrorState from '@/components/common/ErrorState';
+import EmptyState from '@/components/common/EmptyState';
+import FormDrawer from '@/components/common/FormDrawer';
+import SBForm from '@/components/sb/SBForm';
+import { formatCurrency } from '@/utils/currency';
+import { formatDate } from '@/utils/date';
+import { SBFormData } from '@/validations/sb.validation';
+import { SB } from '@/types/sb.types';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { sbMarkPaidSchema, SBMarkPaidFormData } from '@/validations/sb.validation';
+
+export default function SBContainer() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [unpaidOnly, setUnpaidOnly] = useState(false);
+  const [markingPaid, setMarkingPaid] = useState<SB | null>(null);
+
+  const { data, isLoading, isError, refetch } = useSBList({ unpaidOnly });
+  const createSB = useCreateSB();
+  const markPaid = useMarkSBPaid();
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<SBMarkPaidFormData>({
+    resolver: yupResolver(sbMarkPaidSchema),
+  });
+
+  function handleCreateSubmit(formData: SBFormData) {
+    createSB.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
+  }
+
+  function handleMarkPaid(formData: SBMarkPaidFormData) {
+    if (!markingPaid) return;
+    markPaid.mutate({ id: markingPaid.id, data: formData }, { onSuccess: () => { setMarkingPaid(null); reset(); } });
+  }
+
+  if (isLoading) return <LoadingState />;
+  if (isError) return <ErrorState onRetry={refetch} />;
+
+  const records = Array.isArray(data) ? data : [];
+
+  return (
+    <>
+      <PageHeader
+        title="Survival Benefits"
+        subtitle="Track money-back and survival benefit payouts"
+        action={{ label: 'Add SB', onClick: () => setDrawerOpen(true) }}
+      />
+      <Box mb={2}>
+        <FormControlLabel
+          control={<Switch checked={unpaidOnly} onChange={(e) => setUnpaidOnly(e.target.checked)} />}
+          label="Show unpaid only"
+        />
+      </Box>
+      {!records.length ? (
+        <EmptyState title="No SB records" message="Add survival benefit records." action={{ label: 'Add SB', onClick: () => setDrawerOpen(true) }} />
+      ) : (
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Policy No.</TableCell>
+                <TableCell>SB Due Date</TableCell>
+                <TableCell align="right">SB Amount</TableCell>
+                <TableCell>Instalment No.</TableCell>
+                <TableCell>Pay Date</TableCell>
+                <TableCell>Cheque No.</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="center">Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {records.map((sb) => (
+                <TableRow key={sb.id} hover>
+                  <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{sb.policyNo}</TableCell>
+                  <TableCell>{formatDate(sb.sbDueDate)}</TableCell>
+                  <TableCell align="right">{formatCurrency(sb.sbAmount)}</TableCell>
+                  <TableCell>{sb.instalmentNo}</TableCell>
+                  <TableCell>{formatDate(sb.sbPayDate) || '—'}</TableCell>
+                  <TableCell>{sb.chequeNo || '—'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={sb.sbPayDate ? 'Received' : 'Pending'}
+                      size="small"
+                      color={sb.sbPayDate ? 'success' : 'warning'}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    {!sb.sbPayDate && (
+                      <Button size="small" variant="outlined" color="success" onClick={() => { setMarkingPaid(sb); reset(); }}>
+                        Mark Paid
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      <FormDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add Survival Benefit">
+        <SBForm onSubmit={handleCreateSubmit} loading={createSB.isPending} onCancel={() => setDrawerOpen(false)} />
+      </FormDrawer>
+
+      <Dialog open={!!markingPaid} onClose={() => setMarkingPaid(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Mark SB as Received — Policy {markingPaid?.policyNo}</DialogTitle>
+        <DialogContent>
+          <Box component="form" id="sb-paid-form" onSubmit={handleSubmit(handleMarkPaid)} display="flex" flexDirection="column" gap={2} pt={1}>
+            <TextField label="Paid Date *" type="date" fullWidth InputLabelProps={{ shrink: true }} {...register('paidDate')} error={!!errors.paidDate} helperText={errors.paidDate?.message} />
+            <TextField label="Cheque No. (optional)" fullWidth {...register('chequeNo')} />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setMarkingPaid(null)}>Cancel</Button>
+          <Button type="submit" form="sb-paid-form" variant="contained" color="success" disabled={markPaid.isPending}>
+            {markPaid.isPending ? 'Saving...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}

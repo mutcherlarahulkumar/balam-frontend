@@ -1,9 +1,14 @@
 import React from 'react';
-import { Grid, Card, CardContent, Typography, Box, Chip, Table, TableBody, TableCell, TableHead, TableRow, Paper, Alert } from '@mui/material';
+import {
+  Grid, Card, CardContent, Typography, Box, Chip, Divider,
+  List, ListItem, ListItemText, ListItemSecondaryAction, Alert,
+} from '@mui/material';
 import PolicyIcon from '@mui/icons-material/Policy';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import WarningIcon from '@mui/icons-material/Warning';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useRouter } from 'next/router';
 import StatCard from '@/components/common/StatCard';
 import LoadingState from '@/components/common/LoadingState';
 import { usePolicies } from '@/hooks/usePolicies';
@@ -18,154 +23,231 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function DashboardContainer() {
   const { agent } = useAuth();
-  const { data: policies, isLoading: loadingPolicies } = usePolicies({ limit: 5 });
-  const { data: families } = useFamilies({});
+  const router = useRouter();
+  const { data: policies, isLoading } = usePolicies({ limit: 6 });
+  const { data: families } = useFamilies({ limit: 1 });
   const { data: commissionSummary } = useCommissionSummary();
   const { data: duePolicies } = useFUPDue({});
   const { data: todayActivities } = useTodayActivities();
 
-  if (loadingPolicies) return <LoadingState />;
+  if (isLoading) return <LoadingState />;
 
-  const inForcePolicies = policies?.data?.filter((p) => p.status === 'IF').length ?? 0;
-  const lapsedCount = policies?.data?.filter((p) => p.status === 'LA').length ?? 0;
+  const lapsingCount = policies?.data?.filter((p) => p.daysUntilLapse < 30 && p.status === 'IF').length ?? 0;
+  const inForceCount = policies?.data?.filter((p) => p.status === 'IF').length ?? 0;
+  const overdueCount = duePolicies?.data?.filter((d) => d.daysOverdue > 0).length ?? 0;
 
   return (
     <Box>
-      <Box mb={3}>
-        <Typography variant="h5" fontWeight={700} color="primary.main">
-          Welcome back, {agent?.name?.split(' ')[0]}
+      {/* Greeting */}
+      <Box mb={2.5}>
+        <Typography variant="h5" fontWeight={800} color="primary.main">
+          Namaste, {agent?.name?.split(' ')[0]} 🙏
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {agent?.agentCode} · {agent?.branch}
+          {agent?.club ? ` · ${agent.club}` : ''}
         </Typography>
       </Box>
 
-      {lapsedCount > 0 && (
-        <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3 }}>
-          {lapsedCount} {lapsedCount === 1 ? 'policy has' : 'policies have'} lapsed. Review FUP tracking.
+      {/* Urgent alerts */}
+      {lapsingCount > 0 && (
+        <Alert
+          severity="error"
+          icon={<WarningAmberIcon />}
+          sx={{ mb: 2, borderRadius: 3, fontSize: '1rem' }}
+        >
+          <strong>{lapsingCount} {lapsingCount === 1 ? 'policy' : 'policies'}</strong> will lapse within 30 days. Review FUP tracking now.
+        </Alert>
+      )}
+      {overdueCount > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2, borderRadius: 3 }}
+        >
+          <strong>{overdueCount} overdue</strong> premium{overdueCount > 1 ? 's' : ''} need collection.
         </Alert>
       )}
 
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+      {/* Key stats */}
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={6} md={3}>
           <StatCard
-            title="Total Families"
+            title="Families"
             value={families?.total ?? 0}
-            icon={<PeopleIcon sx={{ fontSize: 40 }} />}
+            icon={<PeopleIcon sx={{ fontSize: 32 }} />}
             color="primary.main"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} md={3}>
           <StatCard
-            title="Total Policies"
+            title="Policies"
             value={policies?.total ?? 0}
-            icon={<PolicyIcon sx={{ fontSize: 40 }} />}
+            icon={<PolicyIcon sx={{ fontSize: 32 }} />}
             color="secondary.main"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} md={3}>
           <StatCard
             title="In Force"
-            value={inForcePolicies}
-            subtitle={`of ${policies?.data?.length ?? 0} shown`}
+            value={inForceCount}
+            subtitle="active policies"
             color="success.main"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} md={3}>
           <StatCard
-            title="Commission (This Month)"
+            title="Commission"
             value={formatCurrency(commissionSummary?.currentMonth?.totalCommission)}
-            subtitle={`${commissionSummary?.currentMonth?.policiesBilled ?? 0} policies billed`}
-            icon={<TrendingUpIcon sx={{ fontSize: 40 }} />}
-            color="secondary.dark"
+            subtitle="this month"
+            icon={<TrendingUpIcon sx={{ fontSize: 32 }} />}
+            color="secondary.main"
           />
         </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={7}>
+      <Grid container spacing={2}>
+        {/* Due this month */}
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" fontWeight={600} mb={2}>Recent Policies</Typography>
-              {policies?.data && policies.data.length > 0 ? (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Policy No.</TableCell>
-                      <TableCell>Client</TableCell>
-                      <TableCell>Plan</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell align="right">Premium</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {policies.data.slice(0, 5).map((p) => (
-                      <TableRow key={p.id} hover>
-                        <TableCell sx={{ fontFamily: 'monospace' }}>{p.policyNo}</TableCell>
-                        <TableCell>{p.clientName}</TableCell>
-                        <TableCell>{p.planName}</TableCell>
-                        <TableCell><PolicyStatusChip status={p.status} /></TableCell>
-                        <TableCell align="right">{formatCurrency(p.premium)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                <Typography variant="h6">Premiums Due</Typography>
+                <Chip
+                  label={duePolicies?.data?.length ?? 0}
+                  color="warning"
+                  size="small"
+                  sx={{ fontWeight: 700 }}
+                />
+              </Box>
+              {!duePolicies?.data?.length ? (
+                <Box display="flex" alignItems="center" gap={1} color="success.main" py={2}>
+                  <CheckCircleIcon />
+                  <Typography variant="body1">All premiums up to date</Typography>
+                </Box>
               ) : (
-                <Typography variant="body2" color="text.secondary">No policies found.</Typography>
+                <List disablePadding>
+                  {duePolicies.data.slice(0, 5).map((d) => (
+                    <React.Fragment key={d.policyNo}>
+                      <ListItem
+                        disablePadding
+                        sx={{ py: 1.5, cursor: 'pointer' }}
+                        onClick={() => router.push(`/policies/${d.policyNo}`)}
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography variant="body1" fontWeight={600}>{d.clientName}</Typography>
+                          }
+                          secondary={
+                            <Typography variant="body2" color="text.secondary">
+                              {d.planName} · {formatDate(d.nextPremium)}
+                            </Typography>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <Box textAlign="right">
+                            <Typography variant="body1" fontWeight={700} color="primary.main">
+                              {formatCurrency(d.premium)}
+                            </Typography>
+                            {d.daysOverdue > 0 ? (
+                              <Typography variant="caption" color="error.main" fontWeight={700}>
+                                {d.daysOverdue}d overdue
+                              </Typography>
+                            ) : (
+                              <Typography variant="caption" color="warning.main">Due</Typography>
+                            )}
+                          </Box>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+                </List>
               )}
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={5}>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight={600} mb={2}>
-                Due This Month
-                {duePolicies?.data && <Chip label={duePolicies.data.length} size="small" color="warning" sx={{ ml: 1 }} />}
-              </Typography>
-              {duePolicies?.data?.slice(0, 4).map((d) => (
-                <Box key={d.policyNo} display="flex" justifyContent="space-between" py={0.75} borderBottom="1px solid" borderColor="divider">
-                  <Box>
-                    <Typography variant="body2" fontWeight={600}>{d.clientName}</Typography>
-                    <Typography variant="caption" color="text.secondary">{d.planName}</Typography>
-                  </Box>
-                  <Box textAlign="right">
-                    <Typography variant="body2">{formatCurrency(d.premium)}</Typography>
-                    <Typography variant="caption" color={d.daysOverdue > 0 ? 'error.main' : 'text.secondary'}>
-                      {d.daysOverdue > 0 ? `${d.daysOverdue}d overdue` : 'Due'}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-              {!duePolicies?.data?.length && (
-                <Typography variant="body2" color="text.secondary">No policies due.</Typography>
-              )}
-            </CardContent>
-          </Card>
-
+        {/* Recent policies */}
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" fontWeight={600} mb={2}>Today&apos;s Activities</Typography>
-              {todayActivities?.slice(0, 3).map((a) => (
-                <Box key={a.id} display="flex" justifyContent="space-between" py={0.75} borderBottom="1px solid" borderColor="divider">
-                  <Box>
-                    <Chip label={a.activityType} size="small" variant="outlined" sx={{ mr: 1 }} />
-                    <Typography variant="caption" color="text.secondary">{a.details?.slice(0, 40)}</Typography>
-                  </Box>
-                  <Chip
-                    label={a.status}
-                    size="small"
-                    color={a.status === 'DONE' ? 'success' : a.status === 'CANCELLED' ? 'default' : 'warning'}
-                  />
-                </Box>
-              ))}
-              {!todayActivities?.length && (
-                <Typography variant="body2" color="text.secondary">No activities today.</Typography>
+              <Typography variant="h6" mb={1.5}>Recent Policies</Typography>
+              {!policies?.data?.length ? (
+                <Typography variant="body2" color="text.secondary">No policies yet.</Typography>
+              ) : (
+                <List disablePadding>
+                  {policies.data.slice(0, 5).map((p) => (
+                    <React.Fragment key={p.id}>
+                      <ListItem
+                        disablePadding
+                        sx={{ py: 1.5, cursor: 'pointer' }}
+                        onClick={() => router.push(`/policies/${p.policyNo}`)}
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography variant="body1" fontWeight={600}>{p.clientName}</Typography>
+                          }
+                          secondary={
+                            <Typography variant="body2" color="text.secondary">
+                              {p.planName}
+                            </Typography>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <Box textAlign="right">
+                            <PolicyStatusChip status={p.status} />
+                            <Typography variant="body2" color="primary.main" fontWeight={600} mt={0.5}>
+                              {formatCurrency(p.premium)}
+                            </Typography>
+                          </Box>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+                </List>
               )}
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Today's activities */}
+        {todayActivities && todayActivities.length > 0 && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                  <Typography variant="h6">Today&apos;s Reminders</Typography>
+                  <Chip label={todayActivities.length} color="info" size="small" />
+                </Box>
+                <List disablePadding>
+                  {todayActivities.map((a) => (
+                    <React.Fragment key={a.id}>
+                      <ListItem disablePadding sx={{ py: 1.25 }}>
+                        <ListItemText
+                          primary={
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Chip label={a.activityType} size="small" variant="outlined" />
+                              <Typography variant="body1">{a.details || 'No details'}</Typography>
+                            </Box>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <Chip
+                            label={a.status}
+                            size="small"
+                            color={a.status === 'DONE' ? 'success' : 'warning'}
+                          />
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

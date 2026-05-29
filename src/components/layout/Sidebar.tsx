@@ -1,50 +1,74 @@
 import React from 'react';
 import {
-  Box,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  Divider,
+  Box, List, ListItemButton, ListItemIcon, ListItemText,
+  Typography, Divider,
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import PersonIcon from '@mui/icons-material/Person';
-import PolicyIcon from '@mui/icons-material/Policy';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import SavingsIcon from '@mui/icons-material/Savings';
-import ContactsIcon from '@mui/icons-material/Contacts';
-import EventNoteIcon from '@mui/icons-material/EventNote';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import CategoryIcon from '@mui/icons-material/Category';
-import PercentIcon from '@mui/icons-material/Percent';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import PolicyRoundedIcon from '@mui/icons-material/PolicyRounded';
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
+import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
+import ContactsRoundedIcon from '@mui/icons-material/ContactsRounded';
+import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
+import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
+import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
+import PercentRoundedIcon from '@mui/icons-material/PercentRounded';
 import { useRouter } from 'next/router';
 
-interface NavItem {
-  label: string;
-  icon: React.ReactNode;
-  href: string;
+interface NavSection {
+  section: string;
+  items: Array<{ label: string; icon: React.ReactNode; href: string }>;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard' },
-  { label: 'Families', icon: <PeopleIcon />, href: '/families' },
-  { label: 'Clients', icon: <PersonIcon />, href: '/clients' },
-  { label: 'Plans', icon: <CategoryIcon />, href: '/plans' },
-  { label: 'Policies', icon: <PolicyIcon />, href: '/policies' },
-  { label: 'FUP Tracking', icon: <CalendarMonthIcon />, href: '/fup' },
-  { label: 'Commission', icon: <TrendingUpIcon />, href: '/commission' },
-  { label: 'GST Calculator', icon: <PercentIcon />, href: '/gst' },
-  { label: 'Loans', icon: <AccountBalanceIcon />, href: '/loans' },
-  { label: 'Survival Benefits', icon: <SavingsIcon />, href: '/sb' },
-  { label: 'Leads', icon: <ContactsIcon />, href: '/leads' },
-  { label: 'Activities', icon: <EventNoteIcon />, href: '/activities' },
-  { label: 'Reports', icon: <AssessmentIcon />, href: '/reports' },
-  { label: 'Payments', icon: <PaymentsIcon />, href: '/payments' },
+const NAV_SECTIONS: NavSection[] = [
+  {
+    section: 'Overview',
+    items: [
+      { label: 'Dashboard', icon: <DashboardRoundedIcon />, href: '/dashboard' },
+    ],
+  },
+  {
+    section: 'Portfolio',
+    items: [
+      { label: 'Families', icon: <PeopleRoundedIcon />, href: '/families' },
+      { label: 'Clients', icon: <PersonRoundedIcon />, href: '/clients' },
+      { label: 'Plans', icon: <CategoryRoundedIcon />, href: '/plans' },
+      { label: 'Policies', icon: <PolicyRoundedIcon />, href: '/policies' },
+    ],
+  },
+  {
+    section: 'Operations',
+    items: [
+      { label: 'FUP Tracking', icon: <CalendarMonthRoundedIcon />, href: '/fup' },
+      { label: 'Loans', icon: <AccountBalanceRoundedIcon />, href: '/loans' },
+      { label: 'Survival Benefits', icon: <SavingsRoundedIcon />, href: '/sb' },
+    ],
+  },
+  {
+    section: 'Finance',
+    items: [
+      { label: 'Commission', icon: <TrendingUpRoundedIcon />, href: '/commission' },
+      { label: 'GST Calculator', icon: <PercentRoundedIcon />, href: '/gst' },
+      { label: 'Payments', icon: <PaymentsRoundedIcon />, href: '/payments' },
+    ],
+  },
+  {
+    section: 'Prospects',
+    items: [
+      { label: 'Leads', icon: <ContactsRoundedIcon />, href: '/leads' },
+      { label: 'Activities', icon: <EventNoteRoundedIcon />, href: '/activities' },
+    ],
+  },
+  {
+    section: 'Analytics',
+    items: [
+      { label: 'Reports', icon: <AssessmentRoundedIcon />, href: '/reports' },
+    ],
+  },
 ];
 
 interface Props {
@@ -55,37 +79,71 @@ export default function Sidebar({ onNavigate }: Props) {
   const router = useRouter();
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ p: 3, pb: 2 }}>
-        <Typography variant="h5" fontWeight={800} color="white">
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+      {/* Brand */}
+      <Box sx={{ p: 3, pb: 2, pt: 3 }}>
+        <Typography variant="h5" fontWeight={900} color="white" letterSpacing={-0.5}>
           Balam
         </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
           LIC Agent CRM
         </Typography>
       </Box>
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.15)' }} />
-      <List sx={{ px: 1, py: 1, flexGrow: 1, overflowY: 'auto' }}>
-        {NAV_ITEMS.map((item) => {
-          const active = router.pathname.startsWith(item.href);
-          return (
-            <ListItemButton
-              key={item.href}
-              selected={active}
-              onClick={() => { router.push(item.href); onNavigate(); }}
+
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)', mx: 2 }} />
+
+      <List sx={{ px: 1.5, py: 1.5, flexGrow: 1 }}>
+        {NAV_SECTIONS.map((section) => (
+          <Box key={section.section} mb={0.5}>
+            <Typography
+              variant="caption"
               sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                color: active ? 'white' : 'rgba(255,255,255,0.7)',
-                bgcolor: active ? 'rgba(255,255,255,0.15) !important' : 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)', color: 'white' },
+                px: 1.5,
+                py: 0.75,
+                display: 'block',
+                color: 'rgba(255,255,255,0.4)',
+                fontWeight: 700,
+                letterSpacing: 1,
+                textTransform: 'uppercase',
+                fontSize: '0.7rem',
               }}
             >
-              <ListItemIcon sx={{ color: 'inherit', minWidth: 36 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 14, fontWeight: active ? 700 : 400 }} />
-            </ListItemButton>
-          );
-        })}
+              {section.section}
+            </Typography>
+            {section.items.map((item) => {
+              const active = router.pathname === item.href || router.pathname.startsWith(item.href + '/');
+              return (
+                <ListItemButton
+                  key={item.href}
+                  selected={active}
+                  onClick={() => { router.push(item.href); onNavigate(); }}
+                  sx={{
+                    borderRadius: 2.5,
+                    mb: 0.25,
+                    minHeight: 48,
+                    color: active ? 'white' : 'rgba(255,255,255,0.65)',
+                    bgcolor: active ? 'rgba(255,255,255,0.18) !important' : 'transparent',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                      color: 'white',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit', minWidth: 38 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontSize: '0.95rem',
+                      fontWeight: active ? 700 : 500,
+                    }}
+                  />
+                </ListItemButton>
+              );
+            })}
+          </Box>
+        ))}
       </List>
     </Box>
   );

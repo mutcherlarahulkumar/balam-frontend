@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
-  Alert, InputAdornment, IconButton, Divider, Link,
+  InputAdornment, IconButton, Divider, Link,
 } from '@mui/material';
 import NextLink from 'next/link';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -15,11 +15,13 @@ import { useRouter } from 'next/router';
 import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/context/AuthContext';
 import { loginSchema, LoginFormData } from '@/validations/auth.validation';
+import { useToast } from '@/hooks/useToast';
 
 export default function LoginContainer() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),

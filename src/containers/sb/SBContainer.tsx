@@ -5,6 +5,7 @@ import {
   DialogContent, DialogActions, TextField, Typography, Card, CardContent,
   Grid, Divider, useMediaQuery, useTheme,
 } from '@mui/material';
+import { useFormik } from 'formik';
 import { useSBList, useCreateSB, useMarkSBPaid } from '@/hooks/useSB';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingState from '@/components/common/LoadingState';
@@ -14,16 +15,15 @@ import FormDrawer from '@/components/common/FormDrawer';
 import SBForm from '@/components/sb/SBForm';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/date';
-import { SBFormData } from '@/validations/sb.validation';
+import { SBFormData, sbMarkPaidSchema, SBMarkPaidFormData } from '@/validations/sb.validation';
 import { SB } from '@/types/sb.types';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { sbMarkPaidSchema, SBMarkPaidFormData } from '@/validations/sb.validation';
+import { useToast } from '@/hooks/useToast';
 
 export default function SBContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [unpaidOnly, setUnpaidOnly] = useState(false);
   const [markingPaid, setMarkingPaid] = useState<SB | null>(null);
+  const toast = useToast();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -31,17 +31,36 @@ export default function SBContainer() {
   const createSB = useCreateSB();
   const markPaid = useMarkSBPaid();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<SBMarkPaidFormData>({
-    resolver: yupResolver(sbMarkPaidSchema),
+  const markPaidFormik = useFormik<SBMarkPaidFormData>({
+    initialValues: { paidDate: '', chequeNo: '' },
+    validationSchema: sbMarkPaidSchema,
+    validateOnBlur: true,
+    validateOnChange: false,
+    onSubmit: (values) => {
+      if (!markingPaid) return;
+      markPaid.mutate({ id: markingPaid.id, data: values }, {
+        onSuccess: () => {
+          toast.success('SB marked as received');
+          setMarkingPaid(null);
+          markPaidFormik.resetForm();
+        },
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.');
+        },
+      });
+    },
   });
 
   function handleCreateSubmit(formData: SBFormData) {
-    createSB.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
-  }
-
-  function handleMarkPaid(formData: SBMarkPaidFormData) {
-    if (!markingPaid) return;
-    markPaid.mutate({ id: markingPaid.id, data: formData }, { onSuccess: () => { setMarkingPaid(null); reset(); } });
+    createSB.mutate(formData, {
+      onSuccess: () => {
+        toast.success('SB record added');
+        setDrawerOpen(false);
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.');
+      },
+    });
   }
 
   if (isLoading) return <LoadingState />;
@@ -117,7 +136,7 @@ export default function SBContainer() {
                         variant="contained"
                         color="success"
                         size="small"
-                        onClick={() => { setMarkingPaid(sb); reset(); }}
+                        onClick={() => { setMarkingPaid(sb); markPaidFormik.resetForm(); }}
                       >
                         Mark as Received
                       </Button>
@@ -161,7 +180,7 @@ export default function SBContainer() {
                   </TableCell>
                   <TableCell align="center">
                     {!sb.sbPayDate && (
-                      <Button size="small" variant="outlined" color="success" onClick={() => { setMarkingPaid(sb); reset(); }}>
+                      <Button size="small" variant="outlined" color="success" onClick={() => { setMarkingPaid(sb); markPaidFormik.resetForm(); }}>
                         Mark Paid
                       </Button>
                     )}
@@ -180,9 +199,21 @@ export default function SBContainer() {
       <Dialog open={!!markingPaid} onClose={() => setMarkingPaid(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Mark SB as Received — Policy {markingPaid?.policyNo}</DialogTitle>
         <DialogContent>
-          <Box component="form" id="sb-paid-form" onSubmit={handleSubmit(handleMarkPaid)} display="flex" flexDirection="column" gap={2} pt={1}>
-            <TextField label="Paid Date *" type="date" fullWidth InputLabelProps={{ shrink: true }} {...register('paidDate')} error={!!errors.paidDate} helperText={errors.paidDate?.message} />
-            <TextField label="Cheque No. (optional)" fullWidth {...register('chequeNo')} />
+          <Box component="form" id="sb-paid-form" onSubmit={markPaidFormik.handleSubmit} display="flex" flexDirection="column" gap={2} pt={1}>
+            <TextField
+              label="Paid Date *" type="date" fullWidth InputLabelProps={{ shrink: true }}
+              id="paidDate" name="paidDate"
+              value={markPaidFormik.values.paidDate}
+              onChange={markPaidFormik.handleChange} onBlur={markPaidFormik.handleBlur}
+              error={markPaidFormik.touched.paidDate && Boolean(markPaidFormik.errors.paidDate)}
+              helperText={markPaidFormik.touched.paidDate && markPaidFormik.errors.paidDate}
+            />
+            <TextField
+              label="Cheque No. (optional)" fullWidth
+              id="chequeNo" name="chequeNo"
+              value={markPaidFormik.values.chequeNo ?? ''}
+              onChange={markPaidFormik.handleChange} onBlur={markPaidFormik.handleBlur}
+            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

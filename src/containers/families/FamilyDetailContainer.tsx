@@ -159,10 +159,10 @@ export default function FamilyDetailContainer({ familyCode }: Props) {
       </Grid>
 
       <FormDrawer open={editFamilyOpen} onClose={() => setEditFamilyOpen(false)} title="Edit Family">
-        <FamilyForm defaultValues={family} onSubmit={handleUpdateFamily} loading={updateFamily.isPending} onCancel={() => setEditFamilyOpen(false)} />
+        <FamilyForm initialValues={family} onSubmit={handleUpdateFamily} loading={updateFamily.isPending} onCancel={() => setEditFamilyOpen(false)} />
       </FormDrawer>
       <FormDrawer open={addClientOpen} onClose={() => setAddClientOpen(false)} title="Add Member">
-        <ClientForm defaultValues={{ familyCode }} onSubmit={handleAddClient} loading={createClient.isPending} onCancel={() => setAddClientOpen(false)} />
+        <ClientForm initialValues={{ familyCode }} onSubmit={handleAddClient} loading={createClient.isPending} onCancel={() => setAddClientOpen(false)} />
       </FormDrawer>
     </>
   );

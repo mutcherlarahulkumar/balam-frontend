@@ -1,16 +1,22 @@
 import * as yup from 'yup';
 
+const MOBILE_RE = /^[6-9]\d{9}$/;
+
 export const leadSchema = yup.object({
   name: yup
     .string()
     .required('Name is required')
-    .min(2, 'Name must be at least 2 characters'),
+    .min(2, 'Name must be at least 2 characters')
+    .max(80, 'Name must be at most 80 characters')
+    .matches(/^[a-zA-Z\s.'-]+$/, 'Name can only contain letters and spaces'),
   mobile: yup
     .string()
-    .required('Mobile is required')
-    .min(10, 'Mobile must be at least 10 digits'),
-  address: yup.string().optional(),
-  searchTerm: yup.string().optional(),
+    .required('Mobile number is required')
+    .matches(MOBILE_RE, 'Enter a valid 10-digit mobile number starting with 6–9'),
+  address: yup.string().optional().max(255, 'Address too long'),
+  searchTerm: yup.string().optional().max(100, 'Too long'),
 });
 
-export type LeadFormData = yup.InferType<typeof leadSchema>;
+export type LeadFormValues = yup.InferType<typeof leadSchema>;
+/** @deprecated use LeadFormValues */
+export type LeadFormData = LeadFormValues;

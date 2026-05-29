@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
-  Alert, InputAdornment, IconButton, Divider,
+  Alert, InputAdornment, IconButton, Divider, Link,
 } from '@mui/material';
+import NextLink from 'next/link';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -151,8 +152,11 @@ export default function LoginContainer() {
           </Box>
 
           <Divider sx={{ my: 3 }} />
-          <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
-            Balam LIC Agent CRM · Secure Login
+          <Typography variant="body2" color="text.secondary" textAlign="center">
+            New agent?{' '}
+            <Link component={NextLink} href="/register" fontWeight={600}>
+              Create an account
+            </Link>
           </Typography>
         </CardContent>
       </Card>

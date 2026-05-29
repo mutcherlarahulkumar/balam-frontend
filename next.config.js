@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
   reactStrictMode: true,
   swcMinify: true,
   poweredByHeader: false,
   compress: true,
   images: {
+    unoptimized: true,
     domains: ['api.balam.app'],
     formats: ['image/avif', 'image/webp'],
   },

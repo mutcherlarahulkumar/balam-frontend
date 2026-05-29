@@ -18,6 +18,7 @@ import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import PercentRoundedIcon from '@mui/icons-material/PercentRounded';
 import { useRouter } from 'next/router';
+import BalamLogo from '@/components/common/BalamLogo';
 
 interface NavSection {
   section: string;
@@ -81,13 +82,16 @@ export default function Sidebar({ onNavigate }: Props) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
       {/* Brand */}
-      <Box sx={{ p: 3, pb: 2, pt: 3 }}>
-        <Typography variant="h5" fontWeight={900} color="white" letterSpacing={-0.5}>
-          Balam
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
-          LIC Agent CRM
-        </Typography>
+      <Box sx={{ p: 3, pb: 2, pt: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <BalamLogo size={44} />
+        <Box>
+          <Typography variant="h5" fontWeight={900} color="white" letterSpacing={-0.5}>
+            Balam
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+            LIC Agent CRM
+          </Typography>
+        </Box>
       </Box>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)', mx: 2 }} />

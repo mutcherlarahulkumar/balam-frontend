@@ -16,6 +16,7 @@ import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/context/AuthContext';
 import { loginSchema, LoginFormData } from '@/validations/auth.validation';
 import { useToast } from '@/hooks/useToast';
+import BalamLogo from '@/components/common/BalamLogo';
 
 export default function LoginContainer() {
   const [showPassword, setShowPassword] = useState(false);
@@ -60,21 +61,8 @@ export default function LoginContainer() {
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           {/* Logo / Brand */}
           <Box textAlign="center" mb={4}>
-            <Box
-              sx={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-                boxShadow: '0 4px 20px rgba(26,60,94,0.3)',
-              }}
-            >
-              <Typography variant="h4" color="white" fontWeight={800}>B</Typography>
+            <Box mx="auto" mb={2} sx={{ display: 'inline-block', filter: 'drop-shadow(0 4px 20px rgba(26,60,94,0.4))' }}>
+              <BalamLogo size={84} />
             </Box>
             <Typography variant="h4" fontWeight={800} color="primary.main">Balam</Typography>
             <Typography variant="body1" color="text.secondary">LIC Agent CRM</Typography>

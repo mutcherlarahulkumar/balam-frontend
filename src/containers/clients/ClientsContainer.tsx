@@ -19,6 +19,7 @@ import { Client } from '@/types/client.types';
 import { ClientFormData } from '@/validations/client.validation';
 import { ClientType } from '@/types/common.types';
 import { formatDate } from '@/utils/date';
+import { useToast } from '@/hooks/useToast';
 
 const CLIENT_TYPE_LABELS: Record<ClientType, string> = { C: 'Customer', P: 'Prospect', N: 'New' };
 const CLIENT_TYPE_COLORS: Record<ClientType, 'success' | 'warning' | 'default'> = {
@@ -33,6 +34,7 @@ export default function ClientsContainer() {
   const [clientType, setClientType] = useState<ClientType | ''>('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
+  const toast = useToast();
 
   const { data, isLoading, isError, refetch } = useClients({
     search,
@@ -44,9 +46,15 @@ export default function ClientsContainer() {
 
   function handleSubmit(formData: ClientFormData) {
     if (editing) {
-      updateClient.mutate(formData, { onSuccess: () => { setDrawerOpen(false); setEditing(null); } });
+      updateClient.mutate(formData, {
+        onSuccess: () => { toast.success('Client updated'); setDrawerOpen(false); setEditing(null); },
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to update client'),
+      });
     } else {
-      createClient.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
+      createClient.mutate(formData, {
+        onSuccess: () => { toast.success('Client added'); setDrawerOpen(false); },
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to save client'),
+      });
     }
   }
 
@@ -185,7 +193,7 @@ export default function ClientsContainer() {
 
       <FormDrawer open={drawerOpen} onClose={() => { setDrawerOpen(false); setEditing(null); }} title={editing ? 'Edit Client' : 'Add Client'}>
         <ClientForm
-          defaultValues={editing ? { ...editing, dob: editing.dob ?? undefined } : undefined}
+          initialValues={editing ? { ...editing, dob: editing.dob ?? undefined } : undefined}
           onSubmit={handleSubmit}
           loading={createClient.isPending || updateClient.isPending}
           onCancel={() => { setDrawerOpen(false); setEditing(null); }}

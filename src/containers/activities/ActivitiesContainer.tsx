@@ -12,6 +12,7 @@ import FormDrawer from '@/components/common/FormDrawer';
 import ActivityForm from '@/components/activities/ActivityForm';
 import { formatDate } from '@/utils/date';
 import { ActivityFormData } from '@/validations/activity.validation';
+import { useToast } from '@/hooks/useToast';
 import { ActivityStatus } from '@/types/common.types';
 
 const STATUS_COLOR: Record<ActivityStatus, 'default' | 'warning' | 'success' | 'error'> = {
@@ -22,13 +23,17 @@ const STATUS_COLOR: Record<ActivityStatus, 'default' | 'warning' | 'success' | '
 
 export default function ActivitiesContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const toast = useToast();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { data, isLoading, isError, refetch } = useActivities();
   const createActivity = useCreateActivity();
 
   function handleSubmit(formData: ActivityFormData) {
-    createActivity.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
+    createActivity.mutate(formData, {
+      onSuccess: () => { toast.success('Activity logged'); setDrawerOpen(false); },
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+    });
   }
 
   if (isLoading) return <LoadingState />;

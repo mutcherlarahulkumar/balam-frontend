@@ -19,6 +19,7 @@ import FormDrawer from '@/components/common/FormDrawer';
 import FamilyForm from '@/components/families/FamilyForm';
 import { FamilyListItem } from '@/types/family.types';
 import { FamilyFormData } from '@/validations/family.validation';
+import { useToast } from '@/hooks/useToast';
 
 export default function FamiliesContainer() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function FamiliesContainer() {
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<FamilyListItem | null>(null);
+  const toast = useToast();
 
   const { data, isLoading, isError, refetch } = useFamilies({ search, limit: 20 });
   const createFamily = useCreateFamily();
@@ -34,9 +36,15 @@ export default function FamiliesContainer() {
 
   function handleSubmit(formData: FamilyFormData) {
     if (editing) {
-      updateFamily.mutate(formData, { onSuccess: () => { setDrawerOpen(false); setEditing(null); } });
+      updateFamily.mutate(formData, {
+        onSuccess: () => { toast.success('Family saved'); setDrawerOpen(false); setEditing(null); },
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+      });
     } else {
-      createFamily.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
+      createFamily.mutate(formData, {
+        onSuccess: () => { toast.success('Family saved'); setDrawerOpen(false); },
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+      });
     }
   }
 
@@ -155,7 +163,7 @@ export default function FamiliesContainer() {
         title={editing ? 'Edit Family' : 'Add Family'}
       >
         <FamilyForm
-          defaultValues={editing ?? undefined}
+          initialValues={editing ?? undefined}
           onSubmit={handleSubmit}
           loading={createFamily.isPending || updateFamily.isPending}
           onCancel={() => { setDrawerOpen(false); setEditing(null); }}

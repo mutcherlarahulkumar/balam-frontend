@@ -1,53 +1,117 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { useFormik } from 'formik';
 import { Box, TextField, Button, Grid } from '@mui/material';
-import { familySchema, FamilyFormData } from '@/validations/family.validation';
+import { familySchema, FamilyFormValues } from '@/validations/family.validation';
 
 interface Props {
-  defaultValues?: Partial<FamilyFormData>;
-  onSubmit: (data: FamilyFormData) => void;
+  initialValues?: Partial<FamilyFormValues>;
+  onSubmit: (values: FamilyFormValues) => void;
   loading?: boolean;
   onCancel?: () => void;
 }
 
-export default function FamilyForm({ defaultValues, onSubmit, loading, onCancel }: Props) {
-  const { register, handleSubmit, formState: { errors } } = useForm<FamilyFormData>({
-    resolver: yupResolver(familySchema),
-    defaultValues,
+const defaults: FamilyFormValues = {
+  familyCode: '',
+  headName: '',
+  address: '',
+  mobile: '',
+  email: '',
+  pincode: '',
+  religion: '',
+  designation: '',
+};
+
+export default function FamilyForm({ initialValues, onSubmit, loading, onCancel }: Props) {
+  const formik = useFormik<FamilyFormValues>({
+    initialValues: { ...defaults, ...initialValues },
+    validationSchema: familySchema,
+    validateOnBlur: true,
+    validateOnChange: false,
+    onSubmit,
   });
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+    <Box component="form" onSubmit={formik.handleSubmit} noValidate>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
-          <TextField label="Family Code" fullWidth {...register('familyCode')} error={!!errors.familyCode} helperText={errors.familyCode?.message ?? 'Auto-generated if blank'} />
+          <TextField
+            id="familyCode" name="familyCode" label="Family Code"
+            fullWidth size="medium"
+            value={formik.values.familyCode} onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.familyCode && Boolean(formik.errors.familyCode)}
+            helperText={(formik.touched.familyCode && formik.errors.familyCode) || 'Auto-generated if blank'}
+          />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField label="Head Name *" fullWidth {...register('headName')} error={!!errors.headName} helperText={errors.headName?.message} />
+          <TextField
+            id="headName" name="headName" label="Head Name *"
+            fullWidth size="medium"
+            value={formik.values.headName} onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.headName && Boolean(formik.errors.headName)}
+            helperText={formik.touched.headName && formik.errors.headName}
+          />
         </Grid>
         <Grid item xs={12}>
-          <TextField label="Address" fullWidth multiline rows={2} {...register('address')} error={!!errors.address} helperText={errors.address?.message} />
+          <TextField
+            id="address" name="address" label="Address"
+            fullWidth size="medium" multiline rows={2}
+            value={formik.values.address} onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.address && Boolean(formik.errors.address)}
+            helperText={formik.touched.address && formik.errors.address}
+          />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField label="Mobile" fullWidth {...register('mobile')} error={!!errors.mobile} helperText={errors.mobile?.message} />
+          <TextField
+            id="mobile" name="mobile" label="Mobile"
+            fullWidth size="medium"
+            inputProps={{ inputMode: 'numeric' as const }}
+            value={formik.values.mobile} onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.mobile && Boolean(formik.errors.mobile)}
+            helperText={(formik.touched.mobile && formik.errors.mobile) || '10-digit Indian mobile'}
+          />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField label="Email" fullWidth {...register('email')} error={!!errors.email} helperText={errors.email?.message} />
+          <TextField
+            id="email" name="email" label="Email" type="email"
+            fullWidth size="medium"
+            inputProps={{ inputMode: 'email' as const }}
+            value={formik.values.email} onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.email && Boolean(formik.errors.email)}
+            helperText={formik.touched.email && formik.errors.email}
+          />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <TextField label="Pincode" fullWidth {...register('pincode')} error={!!errors.pincode} helperText={errors.pincode?.message} />
+          <TextField
+            id="pincode" name="pincode" label="Pincode"
+            fullWidth size="medium"
+            inputProps={{ inputMode: 'numeric' as const }}
+            value={formik.values.pincode} onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.pincode && Boolean(formik.errors.pincode)}
+            helperText={formik.touched.pincode && formik.errors.pincode}
+          />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <TextField label="Religion" fullWidth {...register('religion')} />
+          <TextField
+            id="religion" name="religion" label="Religion"
+            fullWidth size="medium"
+            value={formik.values.religion} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <TextField label="Designation" fullWidth {...register('designation')} />
+          <TextField
+            id="designation" name="designation" label="Designation"
+            fullWidth size="medium"
+            value={formik.values.designation} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
         </Grid>
       </Grid>
       <Box display="flex" gap={2} mt={3}>
-        {onCancel && <Button variant="outlined" onClick={onCancel} fullWidth>Cancel</Button>}
-        <Button type="submit" variant="contained" fullWidth disabled={loading}>
+        {onCancel && (
+          <Button variant="outlined" onClick={onCancel} fullWidth size="large" disabled={loading}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" variant="contained" fullWidth size="large" disabled={loading}>
           {loading ? 'Saving...' : 'Save Family'}
         </Button>
       </Box>

@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
-  Alert, InputAdornment, IconButton, Divider,
+  InputAdornment, IconButton, Divider, Link,
 } from '@mui/material';
+import NextLink from 'next/link';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -14,11 +15,13 @@ import { useRouter } from 'next/router';
 import { authApi } from '@/api/auth.api';
 import { useAuth } from '@/context/AuthContext';
 import { loginSchema, LoginFormData } from '@/validations/auth.validation';
+import { useToast } from '@/hooks/useToast';
 
 export default function LoginContainer() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
@@ -29,6 +32,9 @@ export default function LoginContainer() {
     onSuccess: (data) => {
       login(data.token, data.agent);
       router.push('/dashboard');
+    },
+    onError: () => {
+      toast.error('Incorrect credentials. Check your email/agent code and password.');
     },
   });
 
@@ -78,12 +84,6 @@ export default function LoginContainer() {
           <Typography variant="body2" color="text.secondary" mb={3}>
             Sign in with your email or agent code
           </Typography>
-
-          {mutation.isError && (
-            <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
-              Incorrect credentials. Please check your email/agent code and password.
-            </Alert>
-          )}
 
           <Box
             component="form"
@@ -151,8 +151,11 @@ export default function LoginContainer() {
           </Box>
 
           <Divider sx={{ my: 3 }} />
-          <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
-            Balam LIC Agent CRM · Secure Login
+          <Typography variant="body2" color="text.secondary" textAlign="center">
+            New agent?{' '}
+            <Link component={NextLink} href="/register" fontWeight={600}>
+              Create an account
+            </Link>
           </Typography>
         </CardContent>
       </Card>

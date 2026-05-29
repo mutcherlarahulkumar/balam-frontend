@@ -12,14 +12,19 @@ import LoanForm from '@/components/loans/LoanForm';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/date';
 import { LoanFormData } from '@/validations/loan.validation';
+import { useToast } from '@/hooks/useToast';
 
 export default function LoansContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const toast = useToast();
   const { data, isLoading, isError, refetch } = useLoans();
   const createLoan = useCreateLoan();
 
   function handleSubmit(data: LoanFormData) {
-    createLoan.mutate(data, { onSuccess: () => setDrawerOpen(false) });
+    createLoan.mutate(data, {
+      onSuccess: () => { toast.success('Loan record added'); setDrawerOpen(false); },
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to save loan'),
+    });
   }
 
   if (isLoading) return <LoadingState />;

@@ -12,6 +12,7 @@ import FormDrawer from '@/components/common/FormDrawer';
 import LeadForm from '@/components/leads/LeadForm';
 import { formatDate } from '@/utils/date';
 import { LeadFormData } from '@/validations/lead.validation';
+import { useToast } from '@/hooks/useToast';
 
 const STATUS_LABEL: Record<number, string> = { 0: 'New', 1: 'Contacted', 2: 'Interested', 3: 'Converted', 4: 'Lost' };
 const STATUS_COLOR: Record<number, 'default' | 'info' | 'warning' | 'success' | 'error'> = {
@@ -20,13 +21,17 @@ const STATUS_COLOR: Record<number, 'default' | 'info' | 'warning' | 'success' | 
 
 export default function LeadsContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const toast = useToast();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { data, isLoading, isError, refetch } = useLeads();
   const createLead = useCreateLead();
 
   function handleSubmit(formData: LeadFormData) {
-    createLead.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
+    createLead.mutate(formData, {
+      onSuccess: () => { toast.success('Lead added'); setDrawerOpen(false); },
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+    });
   }
 
   if (isLoading) return <LoadingState />;

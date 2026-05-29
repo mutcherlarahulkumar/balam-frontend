@@ -5,30 +5,51 @@ import {
   TextField,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { useFormik } from 'formik';
 import { useCommissions, useCommissionSummary, useCreateCommission } from '@/hooks/useCommission';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingState from '@/components/common/LoadingState';
 import FormDrawer from '@/components/common/FormDrawer';
 import StatCard from '@/components/common/StatCard';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { commissionSchema, CommissionFormData } from '@/validations/commission.validation';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/date';
+import { useToast } from '@/hooks/useToast';
 
 export default function CommissionContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const toast = useToast();
   const { data: records, isLoading } = useCommissions({});
   const { data: summary } = useCommissionSummary();
   const createCommission = useCreateCommission();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CommissionFormData>({
-    resolver: yupResolver(commissionSchema),
+  const formik = useFormik<CommissionFormData>({
+    initialValues: {
+      policyNo: 0,
+      billDate: '',
+      firstComm: undefined,
+      secondComm: undefined,
+      thirdComm: undefined,
+      bonusComm: undefined,
+      singleComm: undefined,
+      payDate: undefined,
+    },
+    validationSchema: commissionSchema,
+    validateOnBlur: true,
+    validateOnChange: false,
+    onSubmit: (values) => {
+      createCommission.mutate(values, {
+        onSuccess: () => {
+          toast.success('Commission record added');
+          setDrawerOpen(false);
+          formik.resetForm();
+        },
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.');
+        },
+      });
+    },
   });
-
-  function onSubmit(data: CommissionFormData) {
-    createCommission.mutate(data, { onSuccess: () => { setDrawerOpen(false); reset(); } });
-  }
 
   if (isLoading) return <LoadingState />;
 
@@ -127,18 +148,66 @@ export default function CommissionContainer() {
         </CardContent>
       </Card>
 
-      <FormDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add Commission Record">
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} display="flex" flexDirection="column" gap={2.5}>
-          <TextField label="Policy Number *" type="number" fullWidth {...register('policyNo')} error={!!errors.policyNo} helperText={errors.policyNo?.message} />
-          <TextField label="Bill Date *" type="date" fullWidth InputLabelProps={{ shrink: true }} {...register('billDate')} error={!!errors.billDate} helperText={errors.billDate?.message} />
-          <TextField label="First Year Commission (₹)" type="number" fullWidth {...register('firstComm')} />
-          <TextField label="Second Year Commission (₹)" type="number" fullWidth {...register('secondComm')} />
-          <TextField label="Third Year Commission (₹)" type="number" fullWidth {...register('thirdComm')} />
-          <TextField label="Bonus Commission (₹)" type="number" fullWidth {...register('bonusComm')} />
-          <TextField label="Single Premium Commission (₹)" type="number" fullWidth {...register('singleComm')} />
-          <TextField label="Pay Date" type="date" fullWidth InputLabelProps={{ shrink: true }} {...register('payDate')} />
+      <FormDrawer
+        open={drawerOpen}
+        onClose={() => { setDrawerOpen(false); formik.resetForm(); }}
+        title="Add Commission Record"
+      >
+        <Box component="form" onSubmit={formik.handleSubmit} display="flex" flexDirection="column" gap={2.5}>
+          <TextField
+            label="Policy Number *" type="number" fullWidth
+            id="policyNo" name="policyNo"
+            value={formik.values.policyNo || ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.policyNo && Boolean(formik.errors.policyNo)}
+            helperText={formik.touched.policyNo && formik.errors.policyNo}
+          />
+          <TextField
+            label="Bill Date *" type="date" fullWidth InputLabelProps={{ shrink: true }}
+            id="billDate" name="billDate"
+            value={formik.values.billDate}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+            error={formik.touched.billDate && Boolean(formik.errors.billDate)}
+            helperText={formik.touched.billDate && formik.errors.billDate}
+          />
+          <TextField
+            label="First Year Commission (₹)" type="number" fullWidth
+            id="firstComm" name="firstComm"
+            value={formik.values.firstComm ?? ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
+          <TextField
+            label="Second Year Commission (₹)" type="number" fullWidth
+            id="secondComm" name="secondComm"
+            value={formik.values.secondComm ?? ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
+          <TextField
+            label="Third Year Commission (₹)" type="number" fullWidth
+            id="thirdComm" name="thirdComm"
+            value={formik.values.thirdComm ?? ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
+          <TextField
+            label="Bonus Commission (₹)" type="number" fullWidth
+            id="bonusComm" name="bonusComm"
+            value={formik.values.bonusComm ?? ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
+          <TextField
+            label="Single Premium Commission (₹)" type="number" fullWidth
+            id="singleComm" name="singleComm"
+            value={formik.values.singleComm ?? ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
+          <TextField
+            label="Pay Date" type="date" fullWidth InputLabelProps={{ shrink: true }}
+            id="payDate" name="payDate"
+            value={formik.values.payDate ?? ''}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+          />
           <Box display="flex" gap={2}>
-            <Button variant="outlined" fullWidth onClick={() => setDrawerOpen(false)}>Cancel</Button>
+            <Button variant="outlined" fullWidth onClick={() => { setDrawerOpen(false); formik.resetForm(); }}>Cancel</Button>
             <Button type="submit" variant="contained" fullWidth disabled={createCommission.isPending}>
               {createCommission.isPending ? 'Saving...' : 'Save'}
             </Button>

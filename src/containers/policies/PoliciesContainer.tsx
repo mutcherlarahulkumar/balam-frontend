@@ -20,6 +20,7 @@ import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/date';
 import { PolicyStatus } from '@/types/common.types';
 import { PolicyFormData } from '@/validations/policy.validation';
+import { useToast } from '@/hooks/useToast';
 
 const MODE_LABELS: Record<string, string> = {
   Y: 'Yearly', H: 'Half-Yearly', Q: 'Quarterly', M: 'Monthly', S: 'Single',
@@ -32,6 +33,7 @@ export default function PoliciesContainer() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<PolicyStatus | ''>('');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const toast = useToast();
 
   const { data, isLoading, isError, refetch } = usePolicies({
     status: statusFilter || undefined,
@@ -40,7 +42,10 @@ export default function PoliciesContainer() {
   const createPolicy = useCreatePolicy();
 
   function handleSubmit(formData: PolicyFormData) {
-    createPolicy.mutate(formData, { onSuccess: () => setDrawerOpen(false) });
+    createPolicy.mutate(formData, {
+      onSuccess: () => { toast.success('Policy added successfully'); setDrawerOpen(false); },
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to save policy'),
+    });
   }
 
   if (isLoading) return <LoadingState />;

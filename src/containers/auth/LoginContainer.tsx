@@ -33,6 +33,9 @@ export default function LoginContainer() {
       login(data.token, data.agent);
       router.push('/dashboard');
     },
+    onError: () => {
+      toast.error('Incorrect credentials. Check your email/agent code and password.');
+    },
   });
 
   return (
@@ -81,12 +84,6 @@ export default function LoginContainer() {
           <Typography variant="body2" color="text.secondary" mb={3}>
             Sign in with your email or agent code
           </Typography>
-
-          {mutation.isError && (
-            <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
-              Incorrect credentials. Please check your email/agent code and password.
-            </Alert>
-          )}
 
           <Box
             component="form"

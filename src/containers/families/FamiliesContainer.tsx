@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
+  Box, Card, CardActionArea, CardContent, Typography, Grid,
   Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer,
-  IconButton, Chip, Box, Card, CardContent, CardActionArea, Typography,
-  Grid, Divider, useMediaQuery, useTheme,
+  IconButton, Chip, useMediaQuery, useTheme,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PeopleIcon from '@mui/icons-material/People';
 import PolicyIcon from '@mui/icons-material/Policy';
+import PhoneIcon from '@mui/icons-material/Phone';
 import { useRouter } from 'next/router';
 import { useFamilies, useCreateFamily, useUpdateFamily } from '@/hooks/useFamilies';
 import PageHeader from '@/components/common/PageHeader';
@@ -35,17 +36,18 @@ export default function FamiliesContainer() {
   const updateFamily = useUpdateFamily(editing?.familyCode ?? '');
 
   function handleSubmit(formData: FamilyFormData) {
-    if (editing) {
-      updateFamily.mutate(formData, {
-        onSuccess: () => { toast.success('Family saved'); setDrawerOpen(false); setEditing(null); },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
-      });
-    } else {
-      createFamily.mutate(formData, {
-        onSuccess: () => { toast.success('Family saved'); setDrawerOpen(false); },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
-      });
-    }
+    const opts = {
+      onSuccess: () => { toast.success('Family saved'); setDrawerOpen(false); setEditing(null); },
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+    };
+    if (editing) updateFamily.mutate(formData, opts);
+    else createFamily.mutate(formData, opts);
+  }
+
+  function openEdit(e: React.MouseEvent, family: FamilyListItem) {
+    e.stopPropagation();
+    setEditing(family);
+    setDrawerOpen(true);
   }
 
   if (isLoading) return <LoadingState />;
@@ -58,8 +60,9 @@ export default function FamiliesContainer() {
         subtitle={`${data?.total ?? 0} families`}
         action={{ label: 'Add Family', onClick: () => { setEditing(null); setDrawerOpen(true); } }}
       />
+
       <Box mb={2}>
-        <SearchBar value={search} onChange={setSearch} placeholder="Search by name or mobile..." />
+        <SearchBar value={search} onChange={setSearch} placeholder="Search name or mobile..." />
       </Box>
 
       {!data?.data?.length ? (
@@ -69,43 +72,42 @@ export default function FamiliesContainer() {
           action={{ label: 'Add Family', onClick: () => setDrawerOpen(true) }}
         />
       ) : isMobile ? (
-        /* Mobile: card list */
         <Grid container spacing={1.5}>
           {data.data.map((family) => (
             <Grid item xs={12} key={family.id}>
-              <Card>
+              <Card variant="outlined">
                 <CardActionArea onClick={() => router.push(`/families/${family.familyCode}`)}>
-                  <CardContent>
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                     <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                      <Box flex={1} minWidth={0}>
+                      <Box flex={1} minWidth={0} pr={1}>
                         <Typography variant="subtitle1" fontWeight={700} noWrap>{family.headName}</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                           {family.familyCode}
                         </Typography>
                         {family.mobile && (
-                          <Typography variant="body2" color="text.secondary">📞 {family.mobile}</Typography>
+                          <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+                            <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">{family.mobile}</Typography>
+                          </Box>
                         )}
                       </Box>
-                      <Box display="flex" alignItems="center" gap={0.5} ml={1}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => { e.stopPropagation(); setEditing(family); setDrawerOpen(true); }}
-                          sx={{ bgcolor: 'grey.100' }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <ChevronRightIcon color="action" />
-                      </Box>
+                      <IconButton
+                        size="medium"
+                        onClick={(e) => openEdit(e, family)}
+                        sx={{ mt: -0.5 }}
+                        aria-label="edit family"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
                     </Box>
-                    <Divider sx={{ my: 1.5 }} />
-                    <Box display="flex" gap={2}>
+                    <Box display="flex" gap={2} mt={1.5}>
                       <Box display="flex" alignItems="center" gap={0.5}>
-                        <PeopleIcon fontSize="small" color="action" />
-                        <Typography variant="body2">{family.memberCount} members</Typography>
+                        <PeopleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                        <Typography variant="caption">{family.memberCount} members</Typography>
                       </Box>
                       <Box display="flex" alignItems="center" gap={0.5}>
-                        <PolicyIcon fontSize="small" color="primary" />
-                        <Typography variant="body2" color="primary.main" fontWeight={600}>
+                        <PolicyIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                        <Typography variant="caption" color="primary.main" fontWeight={600}>
                           {family.policyCount} policies
                         </Typography>
                       </Box>
@@ -117,9 +119,8 @@ export default function FamiliesContainer() {
           ))}
         </Grid>
       ) : (
-        /* Desktop: table */
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Code</TableCell>
@@ -128,26 +129,31 @@ export default function FamiliesContainer() {
                 <TableCell>Pincode</TableCell>
                 <TableCell align="center">Members</TableCell>
                 <TableCell align="center">Policies</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell align="center" width={80}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {data.data.map((family) => (
-                <TableRow key={family.id} hover sx={{ cursor: 'pointer' }}>
-                  <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{family.familyCode}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} onClick={() => router.push(`/families/${family.familyCode}`)}>
-                    {family.headName}
+                <TableRow
+                  key={family.id}
+                  hover
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => router.push(`/families/${family.familyCode}`)}
+                >
+                  <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '0.8rem' }}>
+                    {family.familyCode}
                   </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{family.headName}</TableCell>
                   <TableCell>{family.mobile || '—'}</TableCell>
                   <TableCell>{family.pincode || '—'}</TableCell>
                   <TableCell align="center"><Chip label={family.memberCount} size="small" /></TableCell>
                   <TableCell align="center"><Chip label={family.policyCount} size="small" color="primary" /></TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" onClick={() => router.push(`/families/${family.familyCode}`)}>
-                      <ChevronRightIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => { setEditing(family); setDrawerOpen(true); }}>
+                  <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                    <IconButton size="small" onClick={(e) => openEdit(e, family)} aria-label="edit">
                       <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => router.push(`/families/${family.familyCode}`)}>
+                      <ChevronRightIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
                 </TableRow>

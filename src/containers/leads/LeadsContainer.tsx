@@ -14,9 +14,20 @@ import { formatDate } from '@/utils/date';
 import { LeadFormData } from '@/validations/lead.validation';
 import { useToast } from '@/hooks/useToast';
 
-const STATUS_LABEL: Record<number, string> = { 0: 'New', 1: 'Contacted', 2: 'Interested', 3: 'Converted', 4: 'Lost' };
+const STATUS_LABEL: Record<number, string> = {
+  0: 'New',
+  1: 'Contacted',
+  2: 'Interested',
+  3: 'Converted',
+  4: 'Lost',
+};
+
 const STATUS_COLOR: Record<number, 'default' | 'info' | 'warning' | 'success' | 'error'> = {
-  0: 'default', 1: 'info', 2: 'warning', 3: 'success', 4: 'error',
+  0: 'default',
+  1: 'info',
+  2: 'warning',
+  3: 'success',
+  4: 'error',
 };
 
 export default function LeadsContainer() {
@@ -30,7 +41,8 @@ export default function LeadsContainer() {
   function handleSubmit(formData: LeadFormData) {
     createLead.mutate(formData, {
       onSuccess: () => { toast.success('Lead added'); setDrawerOpen(false); },
-      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+      onError: (err: any) =>
+        toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
     });
   }
 
@@ -46,8 +58,13 @@ export default function LeadsContainer() {
         subtitle="Track prospective clients and conversions"
         action={{ label: 'Add Lead', onClick: () => setDrawerOpen(true) }}
       />
+
       {!leads.length ? (
-        <EmptyState title="No leads" message="Start adding prospect leads." action={{ label: 'Add Lead', onClick: () => setDrawerOpen(true) }} />
+        <EmptyState
+          title="No leads"
+          message="Start adding prospect leads."
+          action={{ label: 'Add Lead', onClick: () => setDrawerOpen(true) }}
+        />
       ) : isMobile ? (
         <Grid container spacing={1.5}>
           {leads.map((lead) => (
@@ -56,8 +73,14 @@ export default function LeadsContainer() {
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Box flex={1} minWidth={0}>
-                      <Typography variant="subtitle1" fontWeight={700} noWrap>{lead.name}</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                      <Typography variant="subtitle1" fontWeight={700} noWrap>
+                        {lead.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontFamily: 'monospace' }}
+                      >
                         {lead.leadId || `#${lead.id}`}
                       </Typography>
                     </Box>
@@ -94,15 +117,19 @@ export default function LeadsContainer() {
           ))}
         </Grid>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Table>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+        >
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Lead ID</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Mobile</TableCell>
-                <TableCell>Address</TableCell>
-                <TableCell>Search Term</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Address</TableCell>
+                <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Search Term</TableCell>
                 <TableCell>Date Added</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
@@ -113,11 +140,19 @@ export default function LeadsContainer() {
                   <TableCell sx={{ fontFamily: 'monospace' }}>{lead.leadId || `#${lead.id}`}</TableCell>
                   <TableCell sx={{ fontWeight: 500 }}>{lead.name}</TableCell>
                   <TableCell>{lead.mobile}</TableCell>
-                  <TableCell>{lead.address || '—'}</TableCell>
-                  <TableCell>{lead.searchTerm || '—'}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                    {lead.address || '—'}
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
+                    {lead.searchTerm || '—'}
+                  </TableCell>
                   <TableCell>{formatDate(lead.dateAdded)}</TableCell>
                   <TableCell>
-                    <Chip label={STATUS_LABEL[lead.status] ?? 'Unknown'} size="small" color={STATUS_COLOR[lead.status] ?? 'default'} />
+                    <Chip
+                      label={STATUS_LABEL[lead.status] ?? 'Unknown'}
+                      size="small"
+                      color={STATUS_COLOR[lead.status] ?? 'default'}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -125,8 +160,17 @@ export default function LeadsContainer() {
           </Table>
         </TableContainer>
       )}
-      <FormDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add Lead">
-        <LeadForm onSubmit={handleSubmit} loading={createLead.isPending} onCancel={() => setDrawerOpen(false)} />
+
+      <FormDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Add Lead"
+      >
+        <LeadForm
+          onSubmit={handleSubmit}
+          loading={createLead.isPending}
+          onCancel={() => setDrawerOpen(false)}
+        />
       </FormDrawer>
     </>
   );

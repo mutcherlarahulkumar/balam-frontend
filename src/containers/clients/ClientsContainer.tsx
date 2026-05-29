@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
+  Box, Card, CardActionArea, CardContent, Typography, Grid, Divider,
   Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer,
-  Box, Select, MenuItem, FormControl, InputLabel, Chip, Typography,
-  Card, CardContent, CardActionArea, Grid, Divider, useMediaQuery, useTheme,
+  IconButton, Chip, Select, MenuItem, FormControl, InputLabel, useMediaQuery, useTheme,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -21,10 +21,8 @@ import { ClientType } from '@/types/common.types';
 import { formatDate } from '@/utils/date';
 import { useToast } from '@/hooks/useToast';
 
-const CLIENT_TYPE_LABELS: Record<ClientType, string> = { C: 'Customer', P: 'Prospect', N: 'New' };
-const CLIENT_TYPE_COLORS: Record<ClientType, 'success' | 'warning' | 'default'> = {
-  C: 'success', P: 'warning', N: 'default',
-};
+const TYPE_LABEL: Record<ClientType, string> = { C: 'Customer', P: 'Prospect', N: 'Nominee' };
+const TYPE_COLOR: Record<ClientType, 'success' | 'warning' | 'default'> = { C: 'success', P: 'warning', N: 'default' };
 
 export default function ClientsContainer() {
   const router = useRouter();
@@ -36,26 +34,17 @@ export default function ClientsContainer() {
   const [editing, setEditing] = useState<Client | null>(null);
   const toast = useToast();
 
-  const { data, isLoading, isError, refetch } = useClients({
-    search,
-    clientType: clientType || undefined,
-    limit: 20,
-  });
+  const { data, isLoading, isError, refetch } = useClients({ search, clientType: clientType || undefined, limit: 20 });
   const createClient = useCreateClient();
   const updateClient = useUpdateClient(editing?.id ?? 0);
 
   function handleSubmit(formData: ClientFormData) {
-    if (editing) {
-      updateClient.mutate(formData, {
-        onSuccess: () => { toast.success('Client updated'); setDrawerOpen(false); setEditing(null); },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to update client'),
-      });
-    } else {
-      createClient.mutate(formData, {
-        onSuccess: () => { toast.success('Client added'); setDrawerOpen(false); },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to save client'),
-      });
-    }
+    const opts = {
+      onSuccess: () => { toast.success('Client saved'); setDrawerOpen(false); setEditing(null); },
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Something went wrong. Please try again.'),
+    };
+    if (editing) updateClient.mutate(formData, opts);
+    else createClient.mutate(formData, opts);
   }
 
   if (isLoading) return <LoadingState />;
@@ -68,19 +57,18 @@ export default function ClientsContainer() {
         subtitle={`${data?.total ?? 0} clients`}
         action={{ label: 'Add Client', onClick: () => { setEditing(null); setDrawerOpen(true); } }}
       />
-      <Box display="flex" gap={1.5} mb={2} flexWrap="wrap" alignItems="center">
-        <SearchBar value={search} onChange={setSearch} placeholder="Search name, mobile..." />
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Client Type</InputLabel>
-          <Select
-            value={clientType}
-            label="Client Type"
-            onChange={(e) => setClientType(e.target.value as ClientType | '')}
-          >
+
+      <Box display="flex" gap={1.5} mb={2} flexWrap="wrap">
+        <Box flex={1} minWidth={160}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search name or mobile..." />
+        </Box>
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <InputLabel>Type</InputLabel>
+          <Select value={clientType} label="Type" onChange={(e) => setClientType(e.target.value as ClientType | '')}>
             <MenuItem value="">All</MenuItem>
             <MenuItem value="C">Customer</MenuItem>
             <MenuItem value="P">Prospect</MenuItem>
-            <MenuItem value="N">New</MenuItem>
+            <MenuItem value="N">Nominee</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -95,46 +83,48 @@ export default function ClientsContainer() {
         <Grid container spacing={1.5}>
           {data.data.map((client) => (
             <Grid item xs={12} key={client.id}>
-              <Card>
+              <Card variant="outlined">
                 <CardActionArea onClick={() => router.push(`/clients/${client.id}`)}>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                      <Box flex={1} minWidth={0}>
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                      <Box flex={1} minWidth={0} pr={1}>
                         <Typography variant="subtitle1" fontWeight={700} noWrap>{client.name}</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                           {client.familyCode}/{client.persCode}
                         </Typography>
                       </Box>
-                      <Box display="flex" gap={0.5} ml={1} flexShrink={0} alignItems="center">
+                      <Box display="flex" alignItems="center" gap={0.5}>
                         <Chip
-                          label={CLIENT_TYPE_LABELS[client.clientType] ?? client.clientType}
+                          label={TYPE_LABEL[client.clientType] ?? client.clientType}
                           size="small"
-                          color={CLIENT_TYPE_COLORS[client.clientType] ?? 'default'}
+                          color={TYPE_COLOR[client.clientType] ?? 'default'}
                         />
-                        <EditIcon
-                          fontSize="small"
-                          color="action"
+                        <IconButton
+                          size="medium"
                           onClick={(e) => { e.stopPropagation(); setEditing(client); setDrawerOpen(true); }}
-                          sx={{ ml: 0.5, cursor: 'pointer' }}
-                        />
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
                       </Box>
                     </Box>
                     <Divider sx={{ my: 1 }} />
                     <Grid container spacing={1}>
                       <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">Mobile</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">Mobile</Typography>
                         <Typography variant="body2" fontWeight={600}>{client.mobile || '—'}</Typography>
                       </Grid>
                       <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">Date of Birth</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">Date of Birth</Typography>
                         <Typography variant="body2">{formatDate(client.dob)}</Typography>
                       </Grid>
                       <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">Sex</Typography>
-                        <Typography variant="body2">{client.sex === 'M' ? 'Male' : client.sex === 'F' ? 'Female' : client.sex || '—'}</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">Sex</Typography>
+                        <Typography variant="body2">
+                          {client.sex === 'M' ? 'Male' : client.sex === 'F' ? 'Female' : client.sex || '—'}
+                        </Typography>
                       </Grid>
                       <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">Occupation</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">Occupation</Typography>
                         <Typography variant="body2" noWrap>{client.occupation || '—'}</Typography>
                       </Grid>
                     </Grid>
@@ -146,7 +136,7 @@ export default function ClientsContainer() {
         </Grid>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
@@ -155,7 +145,7 @@ export default function ClientsContainer() {
                 <TableCell>Date of Birth</TableCell>
                 <TableCell>Sex</TableCell>
                 <TableCell>Type</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell align="center" width={80}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -167,22 +157,22 @@ export default function ClientsContainer() {
                   onClick={() => router.push(`/clients/${client.id}`)}
                 >
                   <TableCell sx={{ fontWeight: 600 }}>{client.name}</TableCell>
-                  <TableCell sx={{ fontFamily: 'monospace' }}>{client.familyCode}/{client.persCode}</TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                    {client.familyCode}/{client.persCode}
+                  </TableCell>
                   <TableCell>{client.mobile || '—'}</TableCell>
                   <TableCell>{formatDate(client.dob)}</TableCell>
                   <TableCell>{client.sex === 'M' ? 'Male' : client.sex === 'F' ? 'Female' : client.sex || '—'}</TableCell>
                   <TableCell>
-                    <Chip
-                      label={CLIENT_TYPE_LABELS[client.clientType] ?? client.clientType}
-                      size="small"
-                      color={CLIENT_TYPE_COLORS[client.clientType] ?? 'default'}
-                    />
+                    <Chip label={TYPE_LABEL[client.clientType] ?? client.clientType} size="small" color={TYPE_COLOR[client.clientType] ?? 'default'} />
                   </TableCell>
                   <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                    <Box display="flex" justifyContent="center" gap={0.5}>
-                      <ChevronRightIcon color="action" sx={{ cursor: 'pointer' }} onClick={() => router.push(`/clients/${client.id}`)} />
-                      <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={() => { setEditing(client); setDrawerOpen(true); }} />
-                    </Box>
+                    <IconButton size="small" onClick={() => { setEditing(client); setDrawerOpen(true); }}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => router.push(`/clients/${client.id}`)}>
+                      <ChevronRightIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -191,7 +181,11 @@ export default function ClientsContainer() {
         </TableContainer>
       )}
 
-      <FormDrawer open={drawerOpen} onClose={() => { setDrawerOpen(false); setEditing(null); }} title={editing ? 'Edit Client' : 'Add Client'}>
+      <FormDrawer
+        open={drawerOpen}
+        onClose={() => { setDrawerOpen(false); setEditing(null); }}
+        title={editing ? 'Edit Client' : 'Add Client'}
+      >
         <ClientForm
           initialValues={editing ? { ...editing, dob: editing.dob ?? undefined } : undefined}
           onSubmit={handleSubmit}

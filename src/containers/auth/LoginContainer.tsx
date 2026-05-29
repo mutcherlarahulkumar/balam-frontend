@@ -34,8 +34,11 @@ export default function LoginContainer() {
       login(data.token, data.agent);
       router.push('/dashboard');
     },
-    onError: () => {
-      toast.error('Incorrect credentials. Check your email/agent code and password.');
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message
+        ?? err?.message
+        ?? 'Login failed. Please try again.';
+      toast.error(msg);
     },
   });
 

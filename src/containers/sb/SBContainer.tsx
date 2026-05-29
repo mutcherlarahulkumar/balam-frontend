@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer,
   Box, Chip, Switch, FormControlLabel, Button, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField,
+  DialogContent, DialogActions, TextField, Typography, Card, CardContent,
+  Grid, Divider, useMediaQuery, useTheme,
 } from '@mui/material';
 import { useSBList, useCreateSB, useMarkSBPaid } from '@/hooks/useSB';
 import PageHeader from '@/components/common/PageHeader';
@@ -23,6 +24,8 @@ export default function SBContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [unpaidOnly, setUnpaidOnly] = useState(false);
   const [markingPaid, setMarkingPaid] = useState<SB | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const { data, isLoading, isError, refetch } = useSBList({ unpaidOnly });
   const createSB = useCreateSB();
@@ -61,6 +64,70 @@ export default function SBContainer() {
       </Box>
       {!records.length ? (
         <EmptyState title="No SB records" message="Add survival benefit records." action={{ label: 'Add SB', onClick: () => setDrawerOpen(true) }} />
+      ) : isMobile ? (
+        <Grid container spacing={1.5}>
+          {records.map((sb) => (
+            <Grid item xs={12} key={sb.id}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Box flex={1} minWidth={0}>
+                      <Typography variant="subtitle1" fontWeight={700} sx={{ fontFamily: 'monospace' }} noWrap>
+                        {sb.policyNo}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Instalment #{sb.instalmentNo}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={sb.sbPayDate ? 'Received' : 'Pending'}
+                      size="small"
+                      color={sb.sbPayDate ? 'success' : 'warning'}
+                    />
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">SB Due Date</Typography>
+                      <Typography variant="body2" fontWeight={600}>{formatDate(sb.sbDueDate)}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Amount</Typography>
+                      <Typography variant="body2" fontWeight={700} color="primary">{formatCurrency(sb.sbAmount)}</Typography>
+                    </Grid>
+                    {sb.sbPayDate && (
+                      <>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" color="text.secondary">Pay Date</Typography>
+                          <Typography variant="body2">{formatDate(sb.sbPayDate)}</Typography>
+                        </Grid>
+                        {sb.chequeNo && (
+                          <Grid item xs={6}>
+                            <Typography variant="caption" color="text.secondary">Cheque No.</Typography>
+                            <Typography variant="body2">{sb.chequeNo}</Typography>
+                          </Grid>
+                        )}
+                      </>
+                    )}
+                  </Grid>
+                  {!sb.sbPayDate && (
+                    <Box mt={1.5}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={() => { setMarkingPaid(sb); reset(); }}
+                      >
+                        Mark as Received
+                      </Button>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
           <Table>

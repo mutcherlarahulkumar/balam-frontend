@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer, Chip,
+  Box, Typography, Card, CardContent, Grid, Divider, useMediaQuery, useTheme,
 } from '@mui/material';
 import { useActivities, useCreateActivity } from '@/hooks/useActivities';
 import PageHeader from '@/components/common/PageHeader';
@@ -21,6 +22,8 @@ const STATUS_COLOR: Record<ActivityStatus, 'default' | 'warning' | 'success' | '
 
 export default function ActivitiesContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { data, isLoading, isError, refetch } = useActivities();
   const createActivity = useCreateActivity();
 
@@ -42,6 +45,42 @@ export default function ActivitiesContainer() {
       />
       {!activities.length ? (
         <EmptyState title="No activities" message="Log your first client activity." action={{ label: 'Log Activity', onClick: () => setDrawerOpen(true) }} />
+      ) : isMobile ? (
+        <Grid container spacing={1.5}>
+          {activities.map((a) => (
+            <Grid item xs={12} key={a.id}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Chip label={a.activityType} size="small" variant="outlined" />
+                    <Chip
+                      label={a.status}
+                      size="small"
+                      color={STATUS_COLOR[a.status as ActivityStatus] ?? 'default'}
+                    />
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Date</Typography>
+                      <Typography variant="body2" fontWeight={600}>{formatDate(a.activityDate)}</Typography>
+                    </Grid>
+                    {a.reminderDate && (
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary">Reminder</Typography>
+                        <Typography variant="body2">{formatDate(a.reminderDate)}</Typography>
+                      </Grid>
+                    )}
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary">Details</Typography>
+                      <Typography variant="body2">{a.details || '—'}</Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
           <Table>

@@ -81,7 +81,7 @@ export default function CommissionContainer() {
                 <TableBody>
                   {summary.yearly.map((y) => (
                     <TableRow key={y.year}>
-                      <TableCell fontWeight={600}>{y.year}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{y.year}</TableCell>
                       <TableCell align="right">{formatCurrency(y.firstYear)}</TableCell>
                       <TableCell align="right">{formatCurrency(y.renewal)}</TableCell>
                       <TableCell align="right">{formatCurrency(y.bonus)}</TableCell>

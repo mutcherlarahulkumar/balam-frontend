@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer, Chip,
+  Box, Typography, Card, CardContent, Grid, Divider, useMediaQuery, useTheme,
 } from '@mui/material';
 import { useLeads, useCreateLead } from '@/hooks/useLeads';
 import PageHeader from '@/components/common/PageHeader';
@@ -19,6 +20,8 @@ const STATUS_COLOR: Record<number, 'default' | 'info' | 'warning' | 'success' | 
 
 export default function LeadsContainer() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { data, isLoading, isError, refetch } = useLeads();
   const createLead = useCreateLead();
 
@@ -40,6 +43,51 @@ export default function LeadsContainer() {
       />
       {!leads.length ? (
         <EmptyState title="No leads" message="Start adding prospect leads." action={{ label: 'Add Lead', onClick: () => setDrawerOpen(true) }} />
+      ) : isMobile ? (
+        <Grid container spacing={1.5}>
+          {leads.map((lead) => (
+            <Grid item xs={12} key={lead.id}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Box flex={1} minWidth={0}>
+                      <Typography variant="subtitle1" fontWeight={700} noWrap>{lead.name}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                        {lead.leadId || `#${lead.id}`}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={STATUS_LABEL[lead.status] ?? 'Unknown'}
+                      size="small"
+                      color={STATUS_COLOR[lead.status] ?? 'default'}
+                    />
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Mobile</Typography>
+                      <Typography variant="body2" fontWeight={600}>{lead.mobile || '—'}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Date Added</Typography>
+                      <Typography variant="body2">{formatDate(lead.dateAdded)}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary">Address</Typography>
+                      <Typography variant="body2">{lead.address || '—'}</Typography>
+                    </Grid>
+                    {lead.searchTerm && (
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary">Search Term</Typography>
+                        <Typography variant="body2">{lead.searchTerm}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
           <Table>

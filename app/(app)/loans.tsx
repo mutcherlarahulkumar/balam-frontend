@@ -8,7 +8,6 @@ import {
   Portal,
   Button,
   TextInput,
-  ActivityIndicator,
   Divider,
 } from 'react-native-paper';
 import { useFormik } from 'formik';

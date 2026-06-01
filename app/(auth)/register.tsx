@@ -41,7 +41,7 @@ export default function RegisterScreen() {
         },
         onError: (err: any) => {
           const code = err?.response?.data?.error as string;
-          const fieldErrors: Array<{ field: string; message: string }> = err?.response?.data?.errors ?? [];
+          const fieldErrors: { field: string; message: string }[] = err?.response?.data?.errors ?? [];
           if (fieldErrors.length > 0) {
             const touched: Record<string, boolean> = {};
             const errors: Record<string, string> = {};

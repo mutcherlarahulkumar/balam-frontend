@@ -1,4 +1,4 @@
-import { MD3LightTheme, configureFonts } from 'react-native-paper';
+import { MD3LightTheme } from 'react-native-paper';
 
 const PRIMARY = '#1a3c5e';
 const SECONDARY = '#2d6a9f';

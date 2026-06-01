@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
-import { Text, Card, Chip, Divider, IconButton, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
+import { Text, Card, Divider, IconButton, ActivityIndicator } from 'react-native-paper';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { usePolicies } from '@/hooks/usePolicies';
 import { PolicyListItem } from '@/types/policy.types';

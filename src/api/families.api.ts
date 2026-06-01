@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios';
-import { Family, FamilyListItem, FamilyDetail, CreateFamilyRequest } from '@/types/family.types';
+import { FamilyListItem, FamilyDetail, CreateFamilyRequest } from '@/types/family.types';
 import { PaginatedResponse } from '@/types/common.types';
 
 export interface FamilyListParams {

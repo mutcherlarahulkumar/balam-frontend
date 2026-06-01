@@ -24,11 +24,11 @@ export interface PolicyStatusSnapshot {
 
 export interface CalendarEntry {
   month: string;
-  policies: Array<{
+  policies: {
     policyNo: number;
     clientName: string;
     premium: number;
     paymentMode: string;
-  }>;
+  }[];
   totalPremium: number;
 }

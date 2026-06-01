@@ -8,8 +8,6 @@ import {
   Chip,
   FAB,
   ActivityIndicator,
-  Divider,
-  List,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { usePolicies } from '@/hooks/usePolicies';

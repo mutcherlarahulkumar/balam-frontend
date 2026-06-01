@@ -7,8 +7,6 @@ import {
   FAB,
   Chip,
   SegmentedButtons,
-  Divider,
-  List,
   ActivityIndicator,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';

@@ -7,7 +7,7 @@ import {
   Divider,
   ActivityIndicator,
 } from 'react-native-paper';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useClient } from '@/hooks/useClients';
 import { Client } from '@/types/client.types';
 import { ClientType, Sex } from '@/types/common.types';
@@ -39,7 +39,6 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 
 export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
 
   const { data: client, isLoading, isError, refetch } = useClient(Number(id));
 

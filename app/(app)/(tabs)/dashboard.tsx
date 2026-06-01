@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text, Card, List, Chip, Button, Divider, Banner } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { usePolicies } from '@/hooks/usePolicies';

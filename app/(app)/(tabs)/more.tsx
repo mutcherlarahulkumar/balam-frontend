@@ -14,7 +14,7 @@ interface MenuItem {
   color: string;
 }
 
-const MENU_SECTIONS: Array<{ section: string; items: MenuItem[] }> = [
+const MENU_SECTIONS: { section: string; items: MenuItem[] }[] = [
   {
     section: 'CLIENTS & FAMILIES',
     items: [

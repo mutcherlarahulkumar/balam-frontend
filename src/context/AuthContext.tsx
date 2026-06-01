@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AgentPublic } from '@/types/agent.types';
+import { loadStoredAuth, persistAuth, clearAuth, setMemoryToken } from '@/lib/tokenStore';
 
 interface AuthContextValue {
   agent: AgentPublic | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (token: string, agent: AgentPublic) => void;
-  logout: () => void;
+  isLoading: boolean;
+  login: (token: string, agent: AgentPublic) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -14,34 +16,32 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [agent, setAgent] = useState<AgentPublic | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('balam_token');
-    const storedAgent = localStorage.getItem('balam_agent');
-    if (storedToken && storedAgent) {
-      setToken(storedToken);
-      setAgent(JSON.parse(storedAgent) as AgentPublic);
-    }
+    loadStoredAuth().then(({ token: t, agent: a }) => {
+      if (t && a) {
+        setToken(t);
+        setAgent(a as AgentPublic);
+      }
+    }).finally(() => setIsLoading(false));
   }, []);
 
-  function login(newToken: string, newAgent: AgentPublic) {
-    localStorage.setItem('balam_token', newToken);
-    localStorage.setItem('balam_agent', JSON.stringify(newAgent));
+  async function login(newToken: string, newAgent: AgentPublic) {
+    await persistAuth(newToken, newAgent);
     setToken(newToken);
     setAgent(newAgent);
   }
 
-  function logout() {
-    localStorage.removeItem('balam_token');
-    localStorage.removeItem('balam_agent');
+  async function logout() {
+    await clearAuth();
+    setMemoryToken(null);
     setToken(null);
     setAgent(null);
   }
 
   return (
-    <AuthContext.Provider
-      value={{ agent, token, isAuthenticated: !!token, login, logout }}
-    >
+    <AuthContext.Provider value={{ agent, token, isAuthenticated: !!token, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

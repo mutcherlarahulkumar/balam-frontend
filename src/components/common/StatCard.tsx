@@ -1,38 +1,32 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { View, StyleSheet } from 'react-native';
+import { Card, Text } from 'react-native-paper';
 
 interface Props {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon?: React.ReactNode;
   color?: string;
 }
 
-export default function StatCard({ title, value, subtitle, icon, color = 'primary.main' }: Props) {
+export default function StatCard({ title, value, subtitle, color = '#1a3c5e' }: Props) {
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
-          <Box minWidth={0}>
-            <Typography variant="body2" color="text.secondary" gutterBottom noWrap>{title}</Typography>
-            <Typography
-              variant="h5"
-              fontWeight={800}
-              color={color}
-              sx={{ lineHeight: 1.2, wordBreak: 'break-all' }}
-            >
-              {value}
-            </Typography>
-            {subtitle && (
-              <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-          {icon && <Box sx={{ color, opacity: 0.75, flexShrink: 0 }}>{icon}</Box>}
-        </Box>
-      </CardContent>
+    <Card style={styles.card} mode="outlined">
+      <Card.Content style={styles.content}>
+        <Text variant="labelSmall" style={styles.label}>{title}</Text>
+        <Text variant="headlineSmall" style={[styles.value, { color }]} numberOfLines={1} adjustsFontSizeToFit>
+          {String(value)}
+        </Text>
+        {subtitle && <Text variant="labelSmall" style={styles.sub}>{subtitle}</Text>}
+      </Card.Content>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  card: { flex: 1, backgroundColor: '#fff' },
+  content: { paddingVertical: 12, paddingHorizontal: 14 },
+  label: { color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  value: { fontWeight: '800', lineHeight: 32 },
+  sub: { color: '#94a3b8', marginTop: 2 },
+});

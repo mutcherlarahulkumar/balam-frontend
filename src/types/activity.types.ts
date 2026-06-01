@@ -22,3 +22,10 @@ export interface CreateActivityRequest {
   reminderTime?: string;
   status?: ActivityStatus;
 }
+
+export interface UpdateActivityRequest {
+  status?: ActivityStatus;
+  details?: string;
+  activityTime?: string;
+  reminderDate?: string;
+}

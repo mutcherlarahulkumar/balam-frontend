@@ -7,14 +7,14 @@ import {
 } from '@/types/commission.types';
 
 export interface CommissionListParams {
-  year?: string;
-  month?: string;
+  year?: number;
+  month?: number;
 }
 
 export const commissionApi = {
   list: async (params: CommissionListParams = {}): Promise<Commission[]> => {
-    const res = await apiClient.get<Commission[]>('/commission', { params });
-    return res.data;
+    const res = await apiClient.get<{ data: Commission[] }>('/commission', { params });
+    return res.data.data;
   },
   create: async (data: CreateCommissionRequest): Promise<Commission> => {
     const res = await apiClient.post<Commission>('/commission', data);

@@ -20,3 +20,11 @@ export function useCreateLead() {
     onSuccess: () => qc.invalidateQueries({ queryKey: LEAD_KEYS.all }),
   });
 }
+
+export function useUpdateLead(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<CreateLeadRequest>) => leadsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: LEAD_KEYS.all }),
+  });
+}

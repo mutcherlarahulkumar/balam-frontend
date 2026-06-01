@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getToken, clearAuth } from './tokenStore';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://balam-ozwd.onrender.com/v1';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://balam-ozwd.onrender.com/v1';
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -9,30 +10,27 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('balam_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('balam_token');
-      localStorage.removeItem('balam_agent');
-      window.location.href = '/login';
-      return Promise.reject(error);
-    }
+let _onUnauthenticated: (() => void) | null = null;
 
-    // Network error or CORS block — no response object
+export function registerUnauthHandler(fn: () => void) {
+  _onUnauthenticated = fn;
+}
+
+apiClient.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuth();
+      _onUnauthenticated?.();
+    }
     if (!error.response) {
       error.message = 'Cannot reach the server. Check your internet connection.';
     }
-
     return Promise.reject(error);
   },
 );

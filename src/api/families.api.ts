@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios';
-import { Family, FamilyListItem, CreateFamilyRequest } from '@/types/family.types';
+import { Family, FamilyListItem, FamilyDetail, CreateFamilyRequest } from '@/types/family.types';
 import { PaginatedResponse } from '@/types/common.types';
 
 export interface FamilyListParams {
@@ -13,16 +13,16 @@ export const familiesApi = {
     const res = await apiClient.get<PaginatedResponse<FamilyListItem>>('/families', { params });
     return res.data;
   },
-  create: async (data: CreateFamilyRequest): Promise<Family> => {
-    const res = await apiClient.post<Family>('/families', data);
+  create: async (data: CreateFamilyRequest): Promise<{ message: string; familyCode: string }> => {
+    const res = await apiClient.post<{ message: string; familyCode: string }>('/families', data);
     return res.data;
   },
-  getByCode: async (familyCode: string): Promise<Family> => {
-    const res = await apiClient.get<Family>(`/families/${familyCode}`);
+  getByCode: async (familyCode: string): Promise<FamilyDetail> => {
+    const res = await apiClient.get<FamilyDetail>(`/families/${familyCode}`);
     return res.data;
   },
-  update: async (familyCode: string, data: CreateFamilyRequest): Promise<Family> => {
-    const res = await apiClient.put<Family>(`/families/${familyCode}`, data);
+  update: async (familyCode: string, data: Omit<CreateFamilyRequest, 'familyCode'>): Promise<{ message: string }> => {
+    const res = await apiClient.put<{ message: string }>(`/families/${familyCode}`, data);
     return res.data;
   },
 };

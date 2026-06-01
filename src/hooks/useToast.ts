@@ -1,12 +1,12 @@
-import { useSnackbar, VariantType } from 'notistack';
+import { useCallback } from 'react';
+import { useToastContext } from '@/context/ToastContext';
 
 export function useToast() {
-  const { enqueueSnackbar } = useSnackbar();
-
+  const { show } = useToastContext();
   return {
-    success: (msg: string) => enqueueSnackbar(msg, { variant: 'success' }),
-    error: (msg: string) => enqueueSnackbar(msg, { variant: 'error' }),
-    warning: (msg: string) => enqueueSnackbar(msg, { variant: 'warning' }),
-    info: (msg: string) => enqueueSnackbar(msg, { variant: 'info' }),
+    success: useCallback((msg: string) => show(msg, 'success'), [show]),
+    error: useCallback((msg: string) => show(msg, 'error'), [show]),
+    warning: useCallback((msg: string) => show(msg, 'warning'), [show]),
+    info: useCallback((msg: string) => show(msg, 'info'), [show]),
   };
 }

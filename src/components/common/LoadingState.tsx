@@ -1,15 +1,15 @@
 import React from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { View, StyleSheet } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
 
-interface Props {
-  message?: string;
-}
-
-export default function LoadingState({ message = 'Loading...' }: Props) {
+export default function LoadingState() {
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={8} gap={2}>
-      <CircularProgress color="primary" />
-      <Typography variant="body2" color="text.secondary">{message}</Typography>
-    </Box>
+    <View style={styles.root}>
+      <ActivityIndicator size="large" />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200 },
+});

@@ -1,3 +1,6 @@
+import { Client } from './client.types';
+import { PolicyListItem } from './policy.types';
+
 export interface Family {
   id: number;
   familyCode: string;
@@ -10,9 +13,20 @@ export interface Family {
   designation: string;
 }
 
-export interface FamilyListItem extends Family {
+export interface FamilyListItem {
+  id: number;
+  familyCode: string;
+  headName: string;
+  mobile: string;
+  address: string;
+  pincode: string;
   memberCount: number;
   policyCount: number;
+}
+
+export interface FamilyDetail extends Family {
+  members: Client[];
+  policies: PolicyListItem[];
 }
 
 export interface CreateFamilyRequest {

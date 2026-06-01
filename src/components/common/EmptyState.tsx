@@ -1,24 +1,30 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import InboxIcon from '@mui/icons-material/Inbox';
+import { View, StyleSheet } from 'react-native';
+import { Text, Button, Icon } from 'react-native-paper';
 
 interface Props {
-  title?: string;
+  title: string;
   message?: string;
-  action?: { label: string; onClick: () => void };
+  icon?: string;
+  action?: { label: string; onPress: () => void };
 }
 
-export default function EmptyState({
-  title = 'No data found',
-  message = 'There are no records to display.',
-  action,
-}: Props) {
+export default function EmptyState({ title, message, icon = 'inbox-outline', action }: Props) {
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" py={8} gap={2}>
-      <InboxIcon sx={{ fontSize: 56, color: 'text.disabled' }} />
-      <Typography variant="h6" color="text.secondary">{title}</Typography>
-      <Typography variant="body2" color="text.disabled">{message}</Typography>
-      {action && <Button variant="contained" onClick={action.onClick}>{action.label}</Button>}
-    </Box>
+    <View style={styles.root}>
+      <Icon source={icon} size={56} color="#94a3b8" />
+      <Text variant="titleMedium" style={styles.title}>{title}</Text>
+      {message && <Text variant="bodyMedium" style={styles.sub}>{message}</Text>}
+      {action && (
+        <Button mode="contained" onPress={action.onPress} style={styles.btn}>{action.label}</Button>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
+  title: { fontWeight: '700', color: '#334155' },
+  sub: { color: '#64748b', textAlign: 'center' },
+  btn: { marginTop: 8 },
+});

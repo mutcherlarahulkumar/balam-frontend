@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,7 +25,7 @@ val POLICY_STATUSES = listOf("", "IF", "LA", "PU", "SU", "MA", "CL", "EX")
 
 @Composable
 fun PoliciesScreen(
-    onPolicyClick: (Long) -> Unit,
+    onPolicyClick: (Int) -> Unit,
     vm: PoliciesViewModel = hiltViewModel()
 ) {
     val policiesState by vm.policies.collectAsStateWithLifecycle()
@@ -139,7 +140,7 @@ fun PolicyCard(policy: PolicyListItem, onClick: () -> Unit) {
             ) {
                 Column {
                     Text("Plan", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(policy.planName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                    Text(policy.planName ?: "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("Premium", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -164,7 +165,7 @@ fun PolicyCard(policy: PolicyListItem, onClick: () -> Unit) {
 
 @Composable
 fun PolicyDetailScreen(
-    policyNo: Long,
+    policyNo: Int,
     onBack: () -> Unit,
     vm: PoliciesViewModel = hiltViewModel()
 ) {
@@ -186,8 +187,8 @@ fun PolicyDetailScreen(
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Primary)) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(p.clientName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color.White)
-                                Text("Policy #${p.policyNo}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f))
+                                Text("Policy #${p.policyNo}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("Family: ${p.familyCode}", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
                                 Spacer(Modifier.height(8.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     StatusBadge(p.status)
@@ -199,32 +200,35 @@ fun PolicyDetailScreen(
                     item {
                         SectionCard("Policy Details") {
                             InfoRow("Plan", p.planName)
-                            InfoRow("Plan No", p.planNo)
+                            InfoRow("Plan No", p.plan?.toString())
                             InfoRow("Family Code", p.familyCode)
+                            InfoRow("Pers Code", p.persCode)
                             InfoRow("Premium", "₹${"%,.2f".format(p.premium)}")
                             InfoRow("Sum Assured", "₹${"%,.0f".format(p.sumAssured)}")
                             InfoRow("Term", p.term?.let { "$it years" })
-                            InfoRow("PPT Term", p.pptTerm?.let { "$it years" })
-                            InfoRow("Mode", p.modeOfPayment)
+                            InfoRow("PPT", p.ppt?.let { "$it years" })
+                            InfoRow("Mode", p.paymentMode)
+                            InfoRow("Agent Code", p.agCode)
+                            InfoRow("Branch", p.branch)
                         }
                     }
                     item {
                         SectionCard("Dates") {
-                            InfoRow("Commencement", p.commencementDate)
-                            InfoRow("Risk Commencement", p.riskCommencementDate)
-                            InfoRow("FUP", p.fup)
+                            InfoRow("Issue Date", p.issueDate)
+                            InfoRow("FUP", p.lastFup)
+                            InfoRow("Last Paid", p.lastPaid)
                             InfoRow("Next Premium", p.nextPremium)
-                            InfoRow("Maturity Date", p.maturityDate)
-                            if (p.daysUntilLapse > 0) {
-                                InfoRow("Days Until Lapse", "${p.daysUntilLapse} days")
-                            }
+                            InfoRow("Maturity Date", p.matDate)
                         }
                     }
                     item {
-                        SectionCard("Contact") {
-                            InfoRow("Mobile", p.mobile)
-                            InfoRow("Email", p.email)
-                            InfoRow("Address", p.address)
+                        SectionCard("Additional") {
+                            InfoRow("Nominee", p.nominee)
+                            InfoRow("Relation", p.relation)
+                            InfoRow("NEFT", p.neft)
+                            InfoRow("Age", p.age?.toString())
+                            p.dab?.let { InfoRow("DAB", it.toString()) }
+                            p.termRider?.let { InfoRow("Term Rider", it.toString()) }
                         }
                     }
                 }

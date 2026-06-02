@@ -39,7 +39,7 @@ fun GSTScreen(vm: GSTViewModel = hiltViewModel()) {
                 )
                 Button(
                     onClick = {
-                        policyNo.trim().toLongOrNull()?.let { vm.calculate(it) }
+                        policyNo.trim().toIntOrNull()?.let { vm.calculate(it) }
                     },
                     enabled = policyNo.isNotBlank() && gstState !is UiState.Loading
                 ) {

@@ -62,7 +62,7 @@ fun LoansScreen(vm: LoansViewModel = hiltViewModel()) {
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text("Policy #${loan.policyNo}", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                                    Text("₹${"%,.2f".format(loan.loanAmount)}", fontWeight = FontWeight.Bold, color = Primary, style = MaterialTheme.typography.bodyLarge)
+                                    Text("₹${"%,d".format(loan.loanAmount)}", fontWeight = FontWeight.Bold, color = Primary, style = MaterialTheme.typography.bodyLarge)
                                 }
                                 Spacer(Modifier.height(8.dp))
                                 InfoRow("Loan Date", loan.loanDate)
@@ -113,9 +113,9 @@ fun AddLoanDialog(
             Button(
                 onClick = {
                     onConfirm(CreateLoanRequest(
-                        policyNo = policyNo.trim().toLongOrNull() ?: 0L,
+                        policyNo = policyNo.trim().toIntOrNull() ?: 0,
                         loanDate = loanDate.trim(),
-                        loanAmount = loanAmount.toDoubleOrNull() ?: 0.0,
+                        loanAmount = loanAmount.toIntOrNull() ?: 0,
                         interestDueDate = interestDueDate.trim()
                     ))
                 },

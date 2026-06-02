@@ -88,7 +88,6 @@ fun FamiliesScreen(
                                     Column(horizontalAlignment = Alignment.End) {
                                         Text("${family.memberCount} members", style = MaterialTheme.typography.bodySmall)
                                         Text("${family.policyCount} policies", style = MaterialTheme.typography.bodySmall)
-                                        Text("₹${"%,.0f".format(family.totalPremium)}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = Primary)
                                     }
                                 }
                             }
@@ -160,7 +159,7 @@ fun CreateFamilyDialog(
 fun FamilyDetailScreen(
     familyCode: String,
     onBack: () -> Unit,
-    onClientClick: (String) -> Unit,
+    onClientClick: (Int) -> Unit,
     onPolicyClick: (Long) -> Unit,
     vm: FamiliesViewModel = hiltViewModel()
 ) {

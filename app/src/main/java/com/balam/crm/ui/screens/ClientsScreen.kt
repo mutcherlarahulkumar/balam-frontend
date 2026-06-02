@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.Client
+import com.balam.crm.data.model.ClientDetail
 import com.balam.crm.data.model.CreateClientRequest
 import com.balam.crm.ui.components.*
 import com.balam.crm.ui.theme.Primary

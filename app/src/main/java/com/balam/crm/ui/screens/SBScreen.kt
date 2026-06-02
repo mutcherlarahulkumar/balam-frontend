@@ -163,7 +163,7 @@ fun AddSBDialog(
             Button(
                 onClick = {
                     onConfirm(CreateSBRequest(
-                        policyNo = policyNo.trim().toLongOrNull() ?: 0L,
+                        policyNo = policyNo.trim().toIntOrNull() ?: 0,
                         sbDueDate = sbDueDate.trim(),
                         sbAmount = sbAmount.toDoubleOrNull() ?: 0.0,
                         instalmentNo = instalmentNo.trim().toIntOrNull() ?: 1

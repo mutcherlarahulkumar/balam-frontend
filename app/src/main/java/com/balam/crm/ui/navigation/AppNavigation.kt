@@ -144,13 +144,13 @@ fun AppNavigation(tokenStore: TokenStore) {
                 FamilyDetailScreen(
                     familyCode = familyCode,
                     onBack = { navController.popBackStack() },
-                    onClientClick = { id -> navController.navigate(Screen.ClientDetail.withArgs(id)) },
+                    onClientClick = { id -> navController.navigate(Screen.ClientDetail.withArgs(id.toString())) },
                     onPolicyClick = { policyNo -> navController.navigate(Screen.PolicyDetail.withArgs(policyNo.toString())) }
                 )
             }
             composable(Screen.Clients.route) {
                 ClientsScreen(
-                    onClientClick = { id -> navController.navigate(Screen.ClientDetail.withArgs(id)) }
+                    onClientClick = { id -> navController.navigate(Screen.ClientDetail.withArgs(id.toString())) }
                 )
             }
             composable(

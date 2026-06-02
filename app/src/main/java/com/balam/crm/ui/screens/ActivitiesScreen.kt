@@ -182,7 +182,7 @@ fun CreateActivityDialog(
             Button(
                 onClick = {
                     onConfirm(CreateActivityRequest(
-                        policyNo = policyNo.trim().toLongOrNull(),
+                        policyNo = policyNo.trim().toIntOrNull(),
                         activityType = activityType,
                         details = details.ifBlank { null },
                         activityDate = activityDate.trim()

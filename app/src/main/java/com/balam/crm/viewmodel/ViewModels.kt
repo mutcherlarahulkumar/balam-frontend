@@ -545,7 +545,7 @@ class GSTViewModel @Inject constructor(private val api: ApiService) : ViewModel(
     private val _gst = MutableStateFlow<UiState<GSTCalculation>>(UiState.Idle)
     val gst: StateFlow<UiState<GSTCalculation>> = _gst
 
-    fun calculate(policyNo: Long) {
+    fun calculate(policyNo: Int) {
         viewModelScope.launch {
             _gst.value = UiState.Loading
             try {

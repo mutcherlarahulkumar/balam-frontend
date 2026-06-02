@@ -183,7 +183,7 @@ fun AddCommissionDialog(
             Button(
                 onClick = {
                     onConfirm(CreateCommissionRequest(
-                        policyNo = policyNo.trim().toLongOrNull() ?: 0L,
+                        policyNo = policyNo.trim().toIntOrNull() ?: 0,
                         billDate = billDate.trim(),
                         firstComm = firstComm.toDoubleOrNull(),
                         secondComm = secondComm.toDoubleOrNull(),

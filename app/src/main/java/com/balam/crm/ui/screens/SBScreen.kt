@@ -96,7 +96,7 @@ fun SBScreen(vm: SBViewModel = hiltViewModel()) {
             isLoading = createState is UiState.Loading,
             error = (createState as? UiState.Error)?.message,
             onDismiss = { markPaidItem = null; vm.resetCreateState() },
-            onConfirm = { paidDate, chequeNo -> vm.markPaid(item.id, paidDate, chequeNo) }
+            onConfirm = { paidDate, chequeNo -> vm.markPaid(item.id.toInt(), paidDate, chequeNo) }
         )
     }
 }

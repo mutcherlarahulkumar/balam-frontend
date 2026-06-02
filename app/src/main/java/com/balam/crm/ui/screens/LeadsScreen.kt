@@ -111,7 +111,7 @@ fun LeadsScreen(vm: LeadsViewModel = hiltViewModel()) {
                 vm.resetCreateState()
             },
             onConfirm = { req ->
-                editingLead?.let { vm.updateLead(it.id, req) } ?: vm.createLead(req)
+                editingLead?.let { vm.updateLead(it.id.toInt(), req) } ?: vm.createLead(req)
             }
         )
     }

@@ -160,7 +160,7 @@ fun FamilyDetailScreen(
     familyCode: String,
     onBack: () -> Unit,
     onClientClick: (Int) -> Unit,
-    onPolicyClick: (Long) -> Unit,
+    onPolicyClick: (Int) -> Unit,
     vm: FamiliesViewModel = hiltViewModel()
 ) {
     val detailState by vm.familyDetail.collectAsStateWithLifecycle()

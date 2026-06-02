@@ -251,7 +251,7 @@ class ClientsViewModel @Inject constructor(private val api: ApiService) : ViewMo
         }
     }
 
-    fun updateClient(id: String, req: CreateClientRequest) {
+    fun updateClient(id: Int, req: CreateClientRequest) {
         viewModelScope.launch {
             _createState.value = UiState.Loading
             try {
@@ -415,7 +415,7 @@ class SBViewModel @Inject constructor(private val api: ApiService) : ViewModel()
         }
     }
 
-    fun markPaid(id: String, paidDate: String, chequeNo: String?) {
+    fun markPaid(id: Int, paidDate: String, chequeNo: String?) {
         viewModelScope.launch {
             _createState.value = UiState.Loading
             try {
@@ -462,7 +462,7 @@ class LeadsViewModel @Inject constructor(private val api: ApiService) : ViewMode
         }
     }
 
-    fun updateLead(id: String, req: CreateLeadRequest) {
+    fun updateLead(id: Int, req: CreateLeadRequest) {
         viewModelScope.launch {
             _createState.value = UiState.Loading
             try {
@@ -523,7 +523,7 @@ class ActivitiesViewModel @Inject constructor(private val api: ApiService) : Vie
         }
     }
 
-    fun updateActivity(id: String, status: String) {
+    fun updateActivity(id: Int, status: String) {
         viewModelScope.launch {
             _createState.value = UiState.Loading
             try {

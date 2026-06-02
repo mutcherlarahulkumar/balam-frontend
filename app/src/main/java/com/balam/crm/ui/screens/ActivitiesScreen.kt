@@ -103,7 +103,7 @@ fun ActivitiesScreen(vm: ActivitiesViewModel = hiltViewModel()) {
             isLoading = createState is UiState.Loading,
             error = (createState as? UiState.Error)?.message,
             onDismiss = { updateActivity = null; vm.resetCreateState() },
-            onConfirm = { status -> vm.updateActivity(activity.id, status) }
+            onConfirm = { status -> vm.updateActivity(activity.id.toInt(), status) }
         )
     }
 }

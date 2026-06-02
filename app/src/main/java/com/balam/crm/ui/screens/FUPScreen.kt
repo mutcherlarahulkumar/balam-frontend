@@ -141,7 +141,7 @@ fun FUPUpdateDialog(
     onDismiss: () -> Unit,
     onConfirm: (oldFup: String, newFup: String, reason: String?) -> Unit
 ) {
-    var oldFup by remember { mutableStateOf(item.nextPremium) }
+    var oldFup by remember { mutableStateOf(item.nextPremium ?: "") }
     var newFup by remember { mutableStateOf("") }
     var reason by remember { mutableStateOf("") }
 

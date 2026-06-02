@@ -61,7 +61,7 @@ fun GSTScreen(vm: GSTViewModel = hiltViewModel()) {
                     val g = s.data
                     SectionCard("GST Calculation") {
                         InfoRow("Plan No", g.planNo)
-                        InfoRow("Plan Name", g.planName)
+                        InfoRow("Plan Type", g.planType)
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
                         InfoRow("Base Premium", "₹${"%,.2f".format(g.basePremium)}")
                         InfoRow("GST Rate", "${g.gstRate}%")

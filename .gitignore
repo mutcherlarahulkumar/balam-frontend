@@ -1,15 +1,15 @@
-.claude/
-node_modules/
-.expo/
-dist/
-android/
-ios/
-npm-debug.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
-web-build/
+# Misc
+.DS_Store
+*.pem
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Android build outputs (keep project files, ignore build artifacts)
+.gradle/
+app/build/
+build/
+local.properties
+*.iml
+.idea/

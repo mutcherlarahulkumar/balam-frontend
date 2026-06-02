@@ -59,7 +59,7 @@ val bottomNavItems = listOf(
 @Composable
 fun AppNavigation(tokenStore: TokenStore) {
     val navController = rememberNavController()
-    val startDestination = if (tokenStore.isLoggedIn()) Screen.Dashboard.route else Screen.Login.route
+    val startDestination = remember { if (tokenStore.isLoggedIn()) Screen.Dashboard.route else Screen.Login.route }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

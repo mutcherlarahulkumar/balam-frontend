@@ -42,7 +42,7 @@ class DashboardViewModel @Inject constructor(
             try {
                 coroutineScope {
                     val policiesDeferred = async { api.getPolicies(page = 1, limit = 1) }
-                    val fupDeferred = async { api.getFupDue(page = 1, limit = 5) }
+                    val fupDeferred = async { api.getFupDue() }
                     val summaryDeferred = async {
                         try {
                             api.getCommissionSummary()

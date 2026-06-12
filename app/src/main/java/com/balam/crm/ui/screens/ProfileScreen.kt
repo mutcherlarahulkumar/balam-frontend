@@ -1,225 +1,370 @@
 package com.balam.crm.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balam.crm.data.model.Agent
 import com.balam.crm.data.model.UpdateProfileRequest
-import com.balam.crm.ui.components.*
-import com.balam.crm.ui.theme.Primary
-import com.balam.crm.viewmodel.AuthViewModel
+import com.balam.crm.ui.components.ErrorState
+import com.balam.crm.ui.components.InfoRow
+import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.SectionCard
+import com.balam.crm.viewmodel.ProfileViewModel
 import com.balam.crm.viewmodel.UiState
 
 @Composable
 fun ProfileScreen(
-    onLogout: () -> Unit,
-    vm: AuthViewModel = hiltViewModel()
+    onBack: () -> Unit,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val agent = vm.tokenStore.getAgent()
-    val profileState by vm.profileState.collectAsStateWithLifecycle()
-    val changePasswordState by vm.changePasswordState.collectAsStateWithLifecycle()
-    var showEditDialog by remember { mutableStateOf(false) }
-    var showChangePasswordDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    val passwordState by viewModel.passwordState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showEditDialog by rememberSaveable { mutableStateOf(false) }
+    var showPasswordDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(profileState) {
-        if (profileState is UiState.Success) showEditDialog = false
+    LaunchedEffect(updateState) {
+        if (updateState is UiState.Success) {
+            showEditDialog = false
+            viewModel.resetUpdateState()
+            snackbarHostState.showSnackbar("Profile updated")
+        }
     }
-    LaunchedEffect(changePasswordState) {
-        if (changePasswordState is UiState.Success) showChangePasswordDialog = false
+
+    LaunchedEffect(passwordState) {
+        if (passwordState is UiState.Success) {
+            showPasswordDialog = false
+            viewModel.resetPasswordState()
+            snackbarHostState.showSnackbar("Password changed")
+        }
     }
 
     Scaffold(
-        topBar = {
-            CrmTopBar(
-                title = "Profile",
-                actions = {
-                    IconButton(onClick = { showLogoutDialog = true }) {
-                        Icon(Icons.Filled.Logout, contentDescription = "Logout", tint = Color.White)
-                    }
-                }
-            )
-        }
+        topBar = { BackTopBar(title = "Profile", onBack = onBack) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Avatar / name card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Primary)
-            ) {
+        when (val s = state) {
+            is UiState.Loading -> LoadingState(modifier = Modifier.padding(padding))
+            is UiState.Error -> ErrorState(
+                message = s.message,
+                onRetry = { viewModel.load() },
+                modifier = Modifier.padding(padding)
+            )
+            is UiState.Success -> {
+                val agent = s.data
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Surface(
-                        modifier = Modifier.size(72.dp),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = Color.White.copy(alpha = 0.2f)
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = agent?.name?.firstOrNull()?.uppercase() ?: "A",
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Text(
+                            text = agent.name.take(1).uppercase(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                     Spacer(Modifier.height(12.dp))
-                    Text(agent?.name ?: "-", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(agent?.agentCode ?: "-", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
+                    Text(
+                        text = agent.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Agent ${agent.agentCode}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!agent.slogan.isNullOrBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "“${agent.slogan}”",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(Modifier.height(20.dp))
+
+                    SectionCard(title = "Contact") {
+                        InfoRow("Mobile", agent.mobile)
+                        InfoRow("Email", agent.email)
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    SectionCard(title = "Agency") {
+                        InfoRow("Branch", agent.branch)
+                        InfoRow("Club", agent.club)
+                        InfoRow("Licence No", agent.licenceNo)
+                        InfoRow("Agent Since", formatDate(agent.agSince))
+                        InfoRow("Renewal Date", formatDate(agent.renewalDate))
+                        InfoRow("PAN", agent.pan)
+                    }
+                    Spacer(Modifier.height(20.dp))
+
+                    Button(
+                        onClick = { showEditDialog = true },
+                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                    ) {
+                        Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text("Edit Profile")
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { showPasswordDialog = true },
+                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                    ) {
+                        Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(8.dp))
+                        Text("Change Password")
+                    }
+                    Spacer(Modifier.height(16.dp))
                 }
-            }
 
-            SectionCard("Agent Details") {
-                InfoRow("Agent Code", agent?.agentCode)
-                InfoRow("Mobile", agent?.mobile)
-                InfoRow("Email", agent?.email)
-                InfoRow("Branch", agent?.branch)
-                InfoRow("Club", agent?.club)
-                InfoRow("Licence No", agent?.licenceNo)
-            }
-
-            Button(
-                onClick = { showEditDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Edit Profile")
-            }
-
-            OutlinedButton(
-                onClick = { showChangePasswordDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Change Password")
+                if (showEditDialog) {
+                    EditProfileDialog(
+                        agent = agent,
+                        updateState = updateState,
+                        onDismiss = {
+                            showEditDialog = false
+                            viewModel.resetUpdateState()
+                        },
+                        onSubmit = { viewModel.updateProfile(it) }
+                    )
+                }
             }
         }
     }
 
-    if (showEditDialog && agent != null) {
-        EditProfileDialog(
-            currentName = agent.name,
-            currentMobile = agent.mobile,
-            currentEmail = agent.email ?: "",
-            isLoading = profileState is UiState.Loading,
-            error = (profileState as? UiState.Error)?.message,
-            onDismiss = { showEditDialog = false },
-            onConfirm = { name, mobile, email ->
-                vm.updateProfile(UpdateProfileRequest(name = name, mobile = mobile, email = email.ifBlank { null }))
-            }
-        )
-    }
-
-    if (showChangePasswordDialog) {
+    if (showPasswordDialog) {
         ChangePasswordDialog(
-            isLoading = changePasswordState is UiState.Loading,
-            error = (changePasswordState as? UiState.Error)?.message,
-            onDismiss = { showChangePasswordDialog = false; vm.resetPasswordState() },
-            onConfirm = { current, newPass -> vm.changePassword(current, newPass) }
-        )
-    }
-
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
-            confirmButton = {
-                Button(
-                    onClick = onLogout,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Logout") }
+            passwordState = passwordState,
+            onDismiss = {
+                showPasswordDialog = false
+                viewModel.resetPasswordState()
             },
-            dismissButton = { TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") } }
+            onSubmit = { current, new -> viewModel.changePassword(current, new) }
         )
     }
 }
 
 @Composable
-fun EditProfileDialog(
-    currentName: String,
-    currentMobile: String,
-    currentEmail: String,
-    isLoading: Boolean,
-    error: String?,
+private fun EditProfileDialog(
+    agent: Agent,
+    updateState: UiState<*>?,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, mobile: String, email: String) -> Unit
+    onSubmit: (UpdateProfileRequest) -> Unit
 ) {
-    var name by remember { mutableStateOf(currentName) }
-    var mobile by remember { mutableStateOf(currentMobile) }
-    var email by remember { mutableStateOf(currentEmail) }
+    var name by remember { mutableStateOf(agent.name) }
+    var mobile by remember { mutableStateOf(agent.mobile) }
+    var email by remember { mutableStateOf(agent.email ?: "") }
+    var slogan by remember { mutableStateOf(agent.slogan ?: "") }
+    val isLoading = updateState is UiState.Loading
+    val errorMessage = (updateState as? UiState.Error)?.message
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text("Edit Profile") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = mobile, onValueChange = { mobile = it }, label = { Text("Mobile *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Name *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = mobile,
+                    onValueChange = { mobile = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Mobile *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Email") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = slogan,
+                    onValueChange = { slogan = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Slogan") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(name.trim(), mobile.trim(), email.trim()) },
+                onClick = {
+                    onSubmit(
+                        UpdateProfileRequest(
+                            name = name.trim(),
+                            mobile = mobile.trim(),
+                            email = email.trim().takeIf { it.isNotBlank() },
+                            slogan = slogan.trim().takeIf { it.isNotBlank() }
+                        )
+                    )
+                },
                 enabled = name.isNotBlank() && mobile.isNotBlank() && !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Save")
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Save")
+                }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
     )
 }
 
 @Composable
-fun ChangePasswordDialog(
-    isLoading: Boolean,
-    error: String?,
+private fun ChangePasswordDialog(
+    passwordState: UiState<*>?,
     onDismiss: () -> Unit,
-    onConfirm: (current: String, new: String) -> Unit
+    onSubmit: (current: String, new: String) -> Unit
 ) {
-    var current by remember { mutableStateOf("") }
-    var newPass by remember { mutableStateOf("") }
-    var confirmNew by remember { mutableStateOf("") }
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    val isLoading = passwordState is UiState.Loading
+    val errorMessage = (passwordState as? UiState.Error)?.message
+    val mismatch = confirmPassword.isNotEmpty() && newPassword != confirmPassword
+    val valid = currentPassword.isNotBlank() && newPassword.length >= 6 && newPassword == confirmPassword
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text("Change Password") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = current, onValueChange = { current = it }, label = { Text("Current Password *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = newPass, onValueChange = { newPass = it }, label = { Text("New Password *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            Column {
                 OutlinedTextField(
-                    value = confirmNew, onValueChange = { confirmNew = it },
-                    label = { Text("Confirm New Password *") }, singleLine = true,
-                    isError = confirmNew.isNotBlank() && confirmNew != newPass,
-                    modifier = Modifier.fillMaxWidth()
+                    value = currentPassword,
+                    onValueChange = { currentPassword = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Current Password *") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    visualTransformation = PasswordVisualTransformation()
                 )
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("New Password (min 6) *") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Confirm New Password *") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    isError = mismatch,
+                    supportingText = { if (mismatch) Text("Passwords do not match") },
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(current, newPass) },
-                enabled = current.isNotBlank() && newPass.isNotBlank() && newPass == confirmNew && !isLoading
+                onClick = { onSubmit(currentPassword, newPassword) },
+                enabled = valid && !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Change")
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Change")
+                }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
     )
 }

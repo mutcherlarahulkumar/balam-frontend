@@ -1,12 +1,37 @@
 package com.balam.crm.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -15,53 +40,66 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.FUPDueItem
 import com.balam.crm.data.model.FUPUpdateRequest
-import com.balam.crm.ui.components.*
-import com.balam.crm.ui.theme.FUPDue
-import com.balam.crm.ui.theme.FUPOverdue
-import com.balam.crm.ui.theme.Primary
+import com.balam.crm.ui.components.Badge
+import com.balam.crm.ui.components.EmptyState
+import com.balam.crm.ui.components.ErrorState
+import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.formatINR
+import com.balam.crm.ui.theme.DangerRed
+import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.FUPViewModel
 import com.balam.crm.viewmodel.UiState
 
 @Composable
-fun FUPScreen(vm: FUPViewModel = hiltViewModel()) {
-    val fupState by vm.fupList.collectAsStateWithLifecycle()
-    val updateState by vm.updateState.collectAsStateWithLifecycle()
-    var selectedItem by remember { mutableStateOf<FUPDueItem?>(null) }
+fun FUPScreen(
+    onPolicyClick: (Int) -> Unit,
+    viewModel: FUPViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    var dialogItem by remember { mutableStateOf<FUPDueItem?>(null) }
 
-    LaunchedEffect(Unit) { vm.loadFUP() }
     LaunchedEffect(updateState) {
         if (updateState is UiState.Success) {
-            selectedItem = null
-            vm.resetUpdateState()
-            vm.loadFUP()
+            dialogItem = null
+            viewModel.resetUpdateState()
+            viewModel.load()
         }
     }
 
-    Scaffold(topBar = { CrmTopBar(title = "FUP Due") }) { padding ->
-        when (val s = fupState) {
-            is UiState.Loading, is UiState.Idle -> LoadingBox(Modifier.padding(padding))
-            is UiState.Error -> ErrorBox(s.message, onRetry = { vm.loadFUP() })
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = "Follow-up Premiums",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Premiums due and overdue",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+
+        when (val s = state) {
+            is UiState.Loading -> LoadingState()
+            is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load() })
             is UiState.Success -> {
                 val items = s.data.data
                 if (items.isEmpty()) {
-                    Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                        Text("No FUP due entries", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    EmptyState(icon = Icons.Filled.DateRange, message = "No premiums due. All caught up!")
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(padding),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        item {
-                            Text(
-                                "${s.data.total} entries due",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        items(items, key = { it.policyNo }) { fup ->
+                            FupCard(
+                                fup = fup,
+                                onClick = { onPolicyClick(fup.policyNo) },
+                                onUpdate = { dialogItem = fup }
                             )
-                        }
-                        items(items) { item ->
-                            FUPItemCard(item = item, onUpdate = { selectedItem = item })
                         }
                     }
                 }
@@ -69,28 +107,38 @@ fun FUPScreen(vm: FUPViewModel = hiltViewModel()) {
         }
     }
 
-    selectedItem?.let { item ->
-        FUPUpdateDialog(
+    dialogItem?.let { item ->
+        UpdateFupDialog(
             item = item,
-            isLoading = updateState is UiState.Loading,
-            error = (updateState as? UiState.Error)?.message,
+            updateState = updateState,
             onDismiss = {
-                selectedItem = null
-                vm.resetUpdateState()
+                dialogItem = null
+                viewModel.resetUpdateState()
             },
-            onConfirm = { oldFup, newFup, reason ->
-                vm.updateFUP(FUPUpdateRequest(item.policyNo, oldFup, newFup, reason))
+            onSubmit = { newFup, reason ->
+                viewModel.updateFup(
+                    FUPUpdateRequest(
+                        policyNo = item.policyNo,
+                        oldFup = item.nextPremium ?: "",
+                        newFup = newFup,
+                        reason = reason.takeIf { it.isNotBlank() }
+                    )
+                )
             }
         )
     }
 }
 
 @Composable
-fun FUPItemCard(item: FUPDueItem, onUpdate: () -> Unit) {
-    val urgencyColor = if (item.daysOverdue > 0) FUPOverdue else FUPDue
+private fun FupCard(fup: FUPDueItem, onClick: () -> Unit, onUpdate: () -> Unit) {
+    val overdue = fup.daysOverdue > 0
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -98,92 +146,115 @@ fun FUPItemCard(item: FUPDueItem, onUpdate: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(item.clientName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                    Text("Policy #${item.policyNo} • ${item.planName}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (item.daysOverdue > 0) {
-                        Surface(
-                            color = urgencyColor.copy(alpha = 0.15f),
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                "${item.daysOverdue}d overdue",
-                                color = urgencyColor,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                    IconButton(onClick = onUpdate, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Update FUP", tint = Primary)
-                    }
+                Text(
+                    text = fup.clientName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                if (overdue) {
+                    Badge(text = "${fup.daysOverdue}d overdue", color = DangerRed)
+                } else {
+                    Badge(text = "Due", color = WarningOrange)
                 }
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Policy ${fup.policyNo} · ${fup.planName ?: "—"} · ${fup.mobile ?: "no mobile"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                InfoRow("Premium", "₹${"%,.2f".format(item.premium)}", Modifier.weight(1f))
-                InfoRow("Next Premium", item.nextPremium, Modifier.weight(1f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = formatINR(fup.premium),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Due ${formatDate(fup.nextPremium)} · lapses in ${fup.daysUntilLapse}d",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (fup.daysUntilLapse <= 7) DangerRed else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = onUpdate) {
+                    Text("Update FUP")
+                }
             }
-            InfoRow("Lapse in", "${item.daysUntilLapse} days")
-            item.mobile?.let { InfoRow("Mobile", it) }
         }
     }
 }
 
 @Composable
-fun FUPUpdateDialog(
+private fun UpdateFupDialog(
     item: FUPDueItem,
-    isLoading: Boolean,
-    error: String?,
+    updateState: UiState<*>?,
     onDismiss: () -> Unit,
-    onConfirm: (oldFup: String, newFup: String, reason: String?) -> Unit
+    onSubmit: (newFup: String, reason: String) -> Unit
 ) {
-    var oldFup by remember { mutableStateOf(item.nextPremium ?: "") }
     var newFup by remember { mutableStateOf("") }
     var reason by remember { mutableStateOf("") }
+    val isLoading = updateState is UiState.Loading
+    val errorMessage = (updateState as? UiState.Error)?.message
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Update FUP") },
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("Update FUP · Policy ${item.policyNo}") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Policy #${item.policyNo} – ${item.clientName}", style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(
-                    value = oldFup,
-                    onValueChange = { oldFup = it },
-                    label = { Text("Current FUP") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+            Column {
+                Text(
+                    text = "Current FUP: ${formatDate(item.nextPremium)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = newFup,
                     onValueChange = { newFup = it },
-                    label = { Text("New FUP Date (YYYY-MM-DD)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("New FUP date (YYYY-MM-DD) *") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    enabled = !isLoading
                 )
+                Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = reason,
                     onValueChange = { reason = it },
+                    modifier = Modifier.fillMaxWidth(),
                     label = { Text("Reason (optional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    enabled = !isLoading
                 )
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(oldFup, newFup, reason.ifBlank { null }) },
-                enabled = oldFup.isNotBlank() && newFup.isNotBlank() && !isLoading
+                onClick = { onSubmit(newFup.trim(), reason.trim()) },
+                enabled = newFup.isNotBlank() && !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Update")
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Update")
+                }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
     )
 }

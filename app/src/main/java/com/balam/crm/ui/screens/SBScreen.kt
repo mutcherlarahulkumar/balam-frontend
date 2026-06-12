@@ -1,79 +1,118 @@
 package com.balam.crm.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.balam.crm.data.model.CreateSBRequest
+import com.balam.crm.data.model.MarkSBPaidRequest
 import com.balam.crm.data.model.SBItem
-import com.balam.crm.ui.components.*
-import com.balam.crm.ui.theme.FUPPaid
-import com.balam.crm.ui.theme.Primary
+import com.balam.crm.ui.components.Badge
+import com.balam.crm.ui.components.EmptyState
+import com.balam.crm.ui.components.ErrorState
+import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.formatINR
+import com.balam.crm.ui.theme.SuccessGreen
+import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.SBViewModel
 import com.balam.crm.viewmodel.UiState
 
 @Composable
-fun SBScreen(vm: SBViewModel = hiltViewModel()) {
-    val sbState by vm.sbList.collectAsStateWithLifecycle()
-    val createState by vm.createState.collectAsStateWithLifecycle()
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var markPaidItem by remember { mutableStateOf<SBItem?>(null) }
-    var unpaidOnly by remember { mutableStateOf(false) }
+fun SBScreen(
+    onBack: () -> Unit,
+    viewModel: SBViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val actionState by viewModel.actionState.collectAsStateWithLifecycle()
+    var unpaidOnly by rememberSaveable { mutableStateOf(true) }
+    var payItem by remember { mutableStateOf<SBItem?>(null) }
 
-    LaunchedEffect(Unit) { vm.load() }
-    LaunchedEffect(createState) {
-        if (createState is UiState.Success) {
-            showCreateDialog = false
-            markPaidItem = null
-            vm.resetCreateState()
-            vm.load(if (unpaidOnly) true else null)
+    LaunchedEffect(unpaidOnly) {
+        viewModel.load(unpaidOnly)
+    }
+
+    LaunchedEffect(actionState) {
+        if (actionState is UiState.Success) {
+            payItem = null
+            viewModel.resetActionState()
+            viewModel.load(unpaidOnly)
         }
     }
 
     Scaffold(
-        topBar = { CrmTopBar(title = "Survival Benefits") },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = Primary) {
-                Icon(Icons.Filled.Add, contentDescription = "Add", tint = Color.White)
-            }
-        }
+        topBar = { BackTopBar(title = "Survival Benefits", onBack = onBack) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Switch(checked = unpaidOnly, onCheckedChange = {
-                    unpaidOnly = it
-                    vm.load(if (it) true else null)
-                })
-                Spacer(Modifier.width(8.dp))
-                Text("Unpaid Only", style = MaterialTheme.typography.bodyMedium)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = unpaidOnly,
+                    onClick = { unpaidOnly = true },
+                    label = { Text("Unpaid") }
+                )
+                FilterChip(
+                    selected = !unpaidOnly,
+                    onClick = { unpaidOnly = false },
+                    label = { Text("All") }
+                )
             }
+            Spacer(Modifier.height(4.dp))
 
-            when (val s = sbState) {
-                is UiState.Loading, is UiState.Idle -> LoadingBox()
-                is UiState.Error -> ErrorBox(s.message, onRetry = { vm.load() })
+            when (val s = state) {
+                is UiState.Loading -> LoadingState()
+                is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load(unpaidOnly) })
                 is UiState.Success -> {
-                    val list = s.data.data
-                    if (list.isEmpty()) EmptyBox("No SB records found")
-                    else LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(list) { item ->
-                            SBCard(item = item, onMarkPaid = { markPaidItem = item })
+                    val items = s.data.data
+                    if (items.isEmpty()) {
+                        EmptyState(icon = Icons.Filled.Savings, message = "No survival benefits found")
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(items, key = { it.id }) { sb ->
+                                SBCard(sb = sb, onMarkPaid = { payItem = sb })
+                            }
                         }
                     }
                 }
@@ -81,135 +120,151 @@ fun SBScreen(vm: SBViewModel = hiltViewModel()) {
         }
     }
 
-    if (showCreateDialog) {
-        AddSBDialog(
-            isLoading = createState is UiState.Loading,
-            error = (createState as? UiState.Error)?.message,
-            onDismiss = { showCreateDialog = false; vm.resetCreateState() },
-            onConfirm = { vm.createSB(it) }
-        )
-    }
-
-    markPaidItem?.let { item ->
-        MarkSBPaidDialog(
+    payItem?.let { item ->
+        MarkPaidDialog(
             item = item,
-            isLoading = createState is UiState.Loading,
-            error = (createState as? UiState.Error)?.message,
-            onDismiss = { markPaidItem = null; vm.resetCreateState() },
-            onConfirm = { paidDate, chequeNo -> vm.markPaid(item.id.toInt(), paidDate, chequeNo) }
+            actionState = actionState,
+            onDismiss = {
+                payItem = null
+                viewModel.resetActionState()
+            },
+            onSubmit = { paidDate, chequeNo ->
+                viewModel.markPaid(
+                    item.id.toIntOrNull() ?: 0,
+                    MarkSBPaidRequest(paidDate = paidDate, chequeNo = chequeNo.takeIf { it.isNotBlank() })
+                )
+            }
         )
     }
 }
 
 @Composable
-fun SBCard(item: SBItem, onMarkPaid: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+private fun SBCard(sb: SBItem, onMarkPaid: () -> Unit) {
+    val paid = sb.sbPayDate != null
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(item.clientName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                    Text("Policy #${item.policyNo} • Instalment #${item.instalmentNo}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = sb.clientName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                if (paid) {
+                    Badge(text = "Paid ${formatDate(sb.sbPayDate)}", color = SuccessGreen)
+                } else {
+                    Badge(text = "Unpaid", color = WarningOrange)
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("₹${"%,.2f".format(item.sbAmount)}", fontWeight = FontWeight.Bold, color = Primary)
-                    if (item.sbPayDate != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = FUPPaid, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Paid", style = MaterialTheme.typography.labelSmall, color = FUPPaid)
-                        }
-                    } else {
-                        TextButton(onClick = onMarkPaid, contentPadding = PaddingValues(4.dp)) {
-                            Text("Mark Paid", style = MaterialTheme.typography.labelSmall)
-                        }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Policy ${sb.policyNo} · instalment ${sb.instalmentNo}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = formatINR(sb.sbAmount),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Due ${formatDate(sb.sbDueDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (!paid) {
+                    TextButton(onClick = onMarkPaid) {
+                        Text("Mark Paid")
                     }
                 }
             }
-            InfoRow("Due Date", item.sbDueDate)
-            item.sbPayDate?.let { InfoRow("Paid Date", it) }
         }
     }
 }
 
 @Composable
-fun AddSBDialog(
-    isLoading: Boolean,
-    error: String?,
-    onDismiss: () -> Unit,
-    onConfirm: (CreateSBRequest) -> Unit
-) {
-    var policyNo by remember { mutableStateOf("") }
-    var sbDueDate by remember { mutableStateOf("") }
-    var sbAmount by remember { mutableStateOf("") }
-    var instalmentNo by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Survival Benefit") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = policyNo, onValueChange = { policyNo = it }, label = { Text("Policy No *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = sbDueDate, onValueChange = { sbDueDate = it }, label = { Text("SB Due Date (YYYY-MM-DD) *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = sbAmount, onValueChange = { sbAmount = it }, label = { Text("SB Amount *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = instalmentNo, onValueChange = { instalmentNo = it }, label = { Text("Instalment No *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onConfirm(CreateSBRequest(
-                        policyNo = policyNo.trim().toIntOrNull() ?: 0,
-                        sbDueDate = sbDueDate.trim(),
-                        sbAmount = sbAmount.toDoubleOrNull() ?: 0.0,
-                        instalmentNo = instalmentNo.trim().toIntOrNull() ?: 1
-                    ))
-                },
-                enabled = policyNo.isNotBlank() && sbDueDate.isNotBlank() && sbAmount.isNotBlank() && !isLoading
-            ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Add")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
-}
-
-@Composable
-fun MarkSBPaidDialog(
+private fun MarkPaidDialog(
     item: SBItem,
-    isLoading: Boolean,
-    error: String?,
+    actionState: UiState<*>?,
     onDismiss: () -> Unit,
-    onConfirm: (paidDate: String, chequeNo: String?) -> Unit
+    onSubmit: (paidDate: String, chequeNo: String) -> Unit
 ) {
     var paidDate by remember { mutableStateOf("") }
     var chequeNo by remember { mutableStateOf("") }
+    val isLoading = actionState is UiState.Loading
+    val errorMessage = (actionState as? UiState.Error)?.message
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Mark as Paid") },
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("Mark Paid · Policy ${item.policyNo}") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Policy #${item.policyNo} – ₹${"%,.2f".format(item.sbAmount)}", style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(value = paidDate, onValueChange = { paidDate = it }, label = { Text("Paid Date (YYYY-MM-DD) *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = chequeNo, onValueChange = { chequeNo = it }, label = { Text("Cheque No (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            Column {
+                Text(
+                    text = "${formatINR(item.sbAmount)} · instalment ${item.instalmentNo}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = paidDate,
+                    onValueChange = { paidDate = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Paid Date (YYYY-MM-DD) *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = chequeNo,
+                    onValueChange = { chequeNo = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Cheque No (optional)") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(paidDate, chequeNo.ifBlank { null }) },
+                onClick = { onSubmit(paidDate.trim(), chequeNo.trim()) },
                 enabled = paidDate.isNotBlank() && !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Confirm")
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Mark Paid")
+                }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
     )
 }

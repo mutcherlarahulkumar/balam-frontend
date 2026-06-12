@@ -1,97 +1,119 @@
 package com.balam.crm.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.CreateLeadRequest
 import com.balam.crm.data.model.Lead
-import com.balam.crm.ui.components.*
-import com.balam.crm.ui.theme.Primary
+import com.balam.crm.ui.components.EmptyState
+import com.balam.crm.ui.components.ErrorState
+import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.SearchField
 import com.balam.crm.viewmodel.LeadsViewModel
 import com.balam.crm.viewmodel.UiState
+import kotlinx.coroutines.delay
 
 @Composable
-fun LeadsScreen(vm: LeadsViewModel = hiltViewModel()) {
-    val leadsState by vm.leads.collectAsStateWithLifecycle()
-    val createState by vm.createState.collectAsStateWithLifecycle()
-    var search by remember { mutableStateOf("") }
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var editingLead by remember { mutableStateOf<Lead?>(null) }
+fun LeadsScreen(
+    onBack: () -> Unit,
+    viewModel: LeadsViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val saveState by viewModel.saveState.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var editLead by remember { mutableStateOf<Lead?>(null) }
 
-    LaunchedEffect(Unit) { vm.load() }
-    LaunchedEffect(createState) {
-        if (createState is UiState.Success) {
+    LaunchedEffect(query) {
+        if (query.isNotEmpty()) delay(400)
+        viewModel.load(search = query)
+    }
+
+    LaunchedEffect(saveState) {
+        if (saveState is UiState.Success) {
             showCreateDialog = false
-            editingLead = null
-            vm.resetCreateState()
-            vm.load()
+            editLead = null
+            viewModel.resetSaveState()
+            viewModel.load(search = query)
         }
     }
 
     Scaffold(
-        topBar = { CrmTopBar(title = "Leads") },
+        topBar = { BackTopBar(title = "Leads", onBack = onBack) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = Primary) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Lead", tint = Color.White)
+            FloatingActionButton(onClick = { showCreateDialog = true }) {
+                Icon(Icons.Filled.Add, contentDescription = "Add lead")
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            OutlinedTextField(
-                value = search,
-                onValueChange = { search = it; vm.load(it) },
-                placeholder = { Text("Search leads...") },
-                leadingIcon = { Icon(Icons.Filled.Search, null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+        ) {
+            SearchField(
+                value = query,
+                onValueChange = { query = it },
+                placeholder = "Search leads…"
             )
-            when (val s = leadsState) {
-                is UiState.Loading, is UiState.Idle -> LoadingBox()
-                is UiState.Error -> ErrorBox(s.message, onRetry = { vm.load() })
+            Spacer(Modifier.height(4.dp))
+
+            when (val s = state) {
+                is UiState.Loading -> LoadingState()
+                is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load(query) })
                 is UiState.Success -> {
-                    val list = s.data.data
-                    if (list.isEmpty()) EmptyBox("No leads found")
-                    else LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(list) { lead ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(lead.name, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                                        TextButton(onClick = { editingLead = lead }, contentPadding = PaddingValues(4.dp)) {
-                                            Text("Edit", style = MaterialTheme.typography.labelSmall)
-                                        }
-                                    }
-                                    lead.mobile?.let { InfoRow("Mobile", it) }
-                                    lead.address?.let { InfoRow("Address", it) }
-                                    lead.searchTerm?.let { InfoRow("Search Term", it) }
-                                    Text(
-                                        "Added: ${lead.createdAt.take(10)}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                    val leads = s.data.data
+                    if (leads.isEmpty()) {
+                        EmptyState(icon = Icons.Filled.PersonAdd, message = "No leads yet. Add your first prospect!")
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(leads, key = { it.id }) { lead ->
+                                LeadCard(lead = lead, onClick = { editLead = lead })
                             }
                         }
                     }
@@ -100,64 +122,148 @@ fun LeadsScreen(vm: LeadsViewModel = hiltViewModel()) {
         }
     }
 
-    if (showCreateDialog || editingLead != null) {
+    if (showCreateDialog || editLead != null) {
         LeadDialog(
-            lead = editingLead,
-            isLoading = createState is UiState.Loading,
-            error = (createState as? UiState.Error)?.message,
+            lead = editLead,
+            saveState = saveState,
             onDismiss = {
                 showCreateDialog = false
-                editingLead = null
-                vm.resetCreateState()
+                editLead = null
+                viewModel.resetSaveState()
             },
-            onConfirm = { req ->
-                editingLead?.let { vm.updateLead(it.id.toInt(), req) } ?: vm.createLead(req)
+            onSubmit = { request ->
+                val existing = editLead
+                if (existing != null) {
+                    viewModel.update(existing.id.toIntOrNull() ?: 0, request)
+                } else {
+                    viewModel.create(request)
+                }
             }
         )
     }
 }
 
 @Composable
-fun LeadDialog(
+private fun LeadCard(lead: Lead, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = lead.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = listOfNotNull(lead.mobile, lead.address).joinToString(" · ").ifBlank { "No contact details" },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Added ${formatDate(lead.createdAt)}" +
+                    (lead.searchTerm?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: ""),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun LeadDialog(
     lead: Lead?,
-    isLoading: Boolean,
-    error: String?,
+    saveState: UiState<*>?,
     onDismiss: () -> Unit,
-    onConfirm: (CreateLeadRequest) -> Unit
+    onSubmit: (CreateLeadRequest) -> Unit
 ) {
-    var name by remember(lead) { mutableStateOf(lead?.name ?: "") }
-    var mobile by remember(lead) { mutableStateOf(lead?.mobile ?: "") }
-    var address by remember(lead) { mutableStateOf(lead?.address ?: "") }
-    var searchTerm by remember(lead) { mutableStateOf(lead?.searchTerm ?: "") }
+    var name by remember { mutableStateOf(lead?.name ?: "") }
+    var mobile by remember { mutableStateOf(lead?.mobile ?: "") }
+    var address by remember { mutableStateOf(lead?.address ?: "") }
+    var searchTerm by remember { mutableStateOf(lead?.searchTerm ?: "") }
+    val isLoading = saveState is UiState.Loading
+    val errorMessage = (saveState as? UiState.Error)?.message
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (lead == null) "Add Lead" else "Edit Lead") },
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text(if (lead == null) "New Lead" else "Edit Lead") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = mobile, onValueChange = { mobile = it }, label = { Text("Mobile") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = searchTerm, onValueChange = { searchTerm = it }, label = { Text("Search Term") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Name *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = mobile,
+                    onValueChange = { mobile = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Mobile") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Address") },
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = searchTerm,
+                    onValueChange = { searchTerm = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Tag / Search Term") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(CreateLeadRequest(
-                        name = name.trim(),
-                        mobile = mobile.ifBlank { null },
-                        address = address.ifBlank { null },
-                        searchTerm = searchTerm.ifBlank { null }
-                    ))
+                    onSubmit(
+                        CreateLeadRequest(
+                            name = name.trim(),
+                            mobile = mobile.trim().takeIf { it.isNotBlank() },
+                            address = address.trim().takeIf { it.isNotBlank() },
+                            searchTerm = searchTerm.trim().takeIf { it.isNotBlank() }
+                        )
+                    )
                 },
                 enabled = name.isNotBlank() && !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text(if (lead == null) "Add" else "Save")
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(if (lead == null) "Create" else "Save")
+                }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
     )
 }

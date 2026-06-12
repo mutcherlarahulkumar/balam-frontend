@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.balam.crm.data.api.TokenStore
 import com.balam.crm.ui.navigation.AppNavigation
-import com.balam.crm.ui.theme.BalamCRMTheme
+import com.balam.crm.ui.theme.BalamTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BalamCRMTheme {
+            BalamTheme {
                 AppNavigation(tokenStore = tokenStore)
             }
         }

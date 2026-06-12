@@ -1,201 +1,190 @@
 package com.balam.crm.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.CurrencyRupee
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.balam.crm.data.model.CreateCommissionRequest
-import com.balam.crm.ui.components.*
-import com.balam.crm.ui.theme.Primary
+import com.balam.crm.data.model.Commission
+import com.balam.crm.ui.components.EmptyState
+import com.balam.crm.ui.components.ErrorState
+import com.balam.crm.ui.components.InfoRow
+import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.SectionCard
+import com.balam.crm.ui.components.formatINR
+import com.balam.crm.ui.theme.SuccessGreen
 import com.balam.crm.viewmodel.CommissionViewModel
 import com.balam.crm.viewmodel.UiState
 
 @Composable
-fun CommissionScreen(vm: CommissionViewModel = hiltViewModel()) {
-    val commissionsState by vm.commissions.collectAsStateWithLifecycle()
-    val summaryState by vm.summary.collectAsStateWithLifecycle()
-    val createState by vm.createState.collectAsStateWithLifecycle()
-    var showCreateDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) { vm.load() }
-    LaunchedEffect(createState) {
-        if (createState is UiState.Success) {
-            showCreateDialog = false
-            vm.resetCreateState()
-            vm.load()
-        }
-    }
+fun CommissionScreen(
+    onBack: () -> Unit,
+    viewModel: CommissionViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val summaryState by viewModel.summaryState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { CrmTopBar(title = "Commission") },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = Primary) {
-                Icon(Icons.Filled.Add, contentDescription = "Add", tint = androidx.compose.ui.graphics.Color.White)
-            }
-        }
+        topBar = { BackTopBar(title = "Commission", onBack = onBack) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Summary card
-            if (summaryState is UiState.Success) {
-                val summary = (summaryState as UiState.Success).data
-                item {
-                    SectionCard("This Month") {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text("Total Commission", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(
-                                    "₹${"%,.2f".format(summary.currentMonth.totalCommission)}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Primary
+        when (val s = state) {
+            is UiState.Loading -> LoadingState(modifier = Modifier.padding(padding))
+            is UiState.Error -> ErrorState(
+                message = s.message,
+                onRetry = {
+                    viewModel.load(null, null)
+                    viewModel.loadSummary()
+                },
+                modifier = Modifier.padding(padding)
+            )
+            is UiState.Success -> {
+                val commissions = s.data.data
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    (summaryState as? UiState.Success)?.data?.let { summary ->
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
                                 )
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Text(
+                                        text = summary.currentMonth.month,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = formatINR(summary.currentMonth.totalCommission),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = "${summary.currentMonth.policiesBilled} policies billed",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
                             }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text("Policies Billed", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(
-                                    summary.currentMonth.policiesBilled.toString(),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
+                        }
+                        if (summary.yearly.isNotEmpty()) {
+                            item {
+                                SectionCard(title = "Yearly Summary") {
+                                    summary.yearly.forEach { y ->
+                                        InfoRow(
+                                            "${y.year}",
+                                            "${formatINR(y.gross)} (FY ${formatINR(y.firstYear)} · Ren ${formatINR(y.renewal)})"
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                }
-
-                if (summary.yearly.isNotEmpty()) {
                     item {
-                        SectionCard("Yearly Summary") {
-                            summary.yearly.take(3).forEach { yr ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("FY ${yr.year}", fontWeight = FontWeight.Medium)
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("Gross: ₹${"%,.2f".format(yr.gross)}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                                        Text("1st Year: ₹${"%,.2f".format(yr.firstYear)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("Renewal: ₹${"%,.2f".format(yr.renewal)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                                Divider(modifier = Modifier.padding(vertical = 2.dp))
-                            }
-                        }
+                        Text(
+                            text = "Commission Entries (${commissions.size})",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
-                }
-            }
-
-            // Commission list
-            when (val s = commissionsState) {
-                is UiState.Loading, is UiState.Idle -> item { LoadingBox(Modifier.height(200.dp)) }
-                is UiState.Error -> item { ErrorBox(s.message) }
-                is UiState.Success -> {
-                    val list = s.data.data
-                    if (list.isEmpty()) {
-                        item { EmptyBox("No commission records found") }
+                    if (commissions.isEmpty()) {
+                        item {
+                            EmptyState(
+                                icon = Icons.Filled.CurrencyRupee,
+                                message = "No commission records found",
+                                modifier = Modifier.height(220.dp)
+                            )
+                        }
                     } else {
-                        item { Text("Commission Records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }
-                        items(list) { comm ->
-                            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text("Policy #${comm.policyNo}", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                                        comm.billDate?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                    }
-                                    Spacer(Modifier.height(6.dp))
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                        if (comm.firstComm > 0) InfoRow("1st", "₹${"%,.2f".format(comm.firstComm)}", Modifier.weight(1f))
-                                        if (comm.secondComm > 0) InfoRow("2nd", "₹${"%,.2f".format(comm.secondComm)}", Modifier.weight(1f))
-                                        if (comm.thirdComm > 0) InfoRow("3rd", "₹${"%,.2f".format(comm.thirdComm)}", Modifier.weight(1f))
-                                    }
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                        if (comm.bonusComm > 0) InfoRow("Bonus", "₹${"%,.2f".format(comm.bonusComm)}", Modifier.weight(1f))
-                                        if (comm.singleComm > 0) InfoRow("Single", "₹${"%,.2f".format(comm.singleComm)}", Modifier.weight(1f))
-                                    }
-                                    val total = comm.firstComm + comm.secondComm + comm.thirdComm + comm.bonusComm + comm.singleComm + comm.subComm
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                        Text("Total: ₹${"%,.2f".format(total)}", fontWeight = FontWeight.Bold, color = Primary)
-                                    }
-                                }
-                            }
+                        items(commissions, key = { it.id }) { commission ->
+                            CommissionCard(commission = commission)
                         }
                     }
+                    item { Spacer(Modifier.height(8.dp)) }
                 }
             }
         }
-    }
-
-    if (showCreateDialog) {
-        AddCommissionDialog(
-            isLoading = createState is UiState.Loading,
-            error = (createState as? UiState.Error)?.message,
-            onDismiss = { showCreateDialog = false; vm.resetCreateState() },
-            onConfirm = { vm.createCommission(it) }
-        )
     }
 }
 
 @Composable
-fun AddCommissionDialog(
-    isLoading: Boolean,
-    error: String?,
-    onDismiss: () -> Unit,
-    onConfirm: (CreateCommissionRequest) -> Unit
-) {
-    var policyNo by remember { mutableStateOf("") }
-    var billDate by remember { mutableStateOf("") }
-    var firstComm by remember { mutableStateOf("") }
-    var secondComm by remember { mutableStateOf("") }
-    var bonusComm by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Commission") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = policyNo, onValueChange = { policyNo = it }, label = { Text("Policy No *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = billDate, onValueChange = { billDate = it }, label = { Text("Bill Date (YYYY-MM-DD) *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = firstComm, onValueChange = { firstComm = it }, label = { Text("1st Year Commission") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = secondComm, onValueChange = { secondComm = it }, label = { Text("2nd Year Commission") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = bonusComm, onValueChange = { bonusComm = it }, label = { Text("Bonus Commission") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onConfirm(CreateCommissionRequest(
-                        policyNo = policyNo.trim().toIntOrNull() ?: 0,
-                        billDate = billDate.trim(),
-                        firstComm = firstComm.toDoubleOrNull(),
-                        secondComm = secondComm.toDoubleOrNull(),
-                        bonusComm = bonusComm.toDoubleOrNull()
-                    ))
-                },
-                enabled = policyNo.isNotBlank() && billDate.isNotBlank() && !isLoading
+private fun CommissionCard(commission: Commission) {
+    val total = commission.firstComm + commission.secondComm + commission.thirdComm +
+        commission.bonusComm + commission.singleComm + commission.subComm
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Add")
+                Text(
+                    text = "Policy ${commission.policyNo}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = formatINR(total),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = SuccessGreen
+                )
             }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Bill ${formatDate(commission.billDate)} · Paid ${formatDate(commission.payDate)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = buildList {
+                    if (commission.firstComm > 0) add("1st ${formatINR(commission.firstComm)}")
+                    if (commission.secondComm > 0) add("2nd ${formatINR(commission.secondComm)}")
+                    if (commission.thirdComm > 0) add("3rd ${formatINR(commission.thirdComm)}")
+                    if (commission.bonusComm > 0) add("Bonus ${formatINR(commission.bonusComm)}")
+                    if (commission.singleComm > 0) add("Single ${formatINR(commission.singleComm)}")
+                    if (commission.subComm > 0) add("Sub ${formatINR(commission.subComm)}")
+                }.joinToString(" · ").ifBlank { "No breakdown" },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }

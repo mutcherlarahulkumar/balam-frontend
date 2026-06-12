@@ -1,86 +1,138 @@
 package com.balam.crm.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.Activity
 import com.balam.crm.data.model.CreateActivityRequest
-import com.balam.crm.ui.components.*
-import com.balam.crm.ui.theme.Primary
+import com.balam.crm.ui.components.Badge
+import com.balam.crm.ui.components.EmptyState
+import com.balam.crm.ui.components.ErrorState
+import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.theme.SuccessGreen
+import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.ActivitiesViewModel
 import com.balam.crm.viewmodel.UiState
-
-val ACTIVITY_STATUSES = listOf("PENDING", "DONE", "CANCELLED")
-val ACTIVITY_TYPES = listOf("CALL", "VISIT", "FOLLOW_UP", "PAYMENT", "CLAIM", "OTHER")
+import java.util.Locale
 
 @Composable
-fun ActivitiesScreen(vm: ActivitiesViewModel = hiltViewModel()) {
-    val activitiesState by vm.activities.collectAsStateWithLifecycle()
-    val createState by vm.createState.collectAsStateWithLifecycle()
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var updateActivity by remember { mutableStateOf<Activity?>(null) }
-    var selectedStatus by remember { mutableStateOf<String?>(null) }
+fun ActivitiesScreen(
+    onBack: () -> Unit,
+    viewModel: ActivitiesViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val actionState by viewModel.actionState.collectAsStateWithLifecycle()
+    var todayOnly by rememberSaveable { mutableStateOf(true) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { vm.load() }
-    LaunchedEffect(createState) {
-        if (createState is UiState.Success) {
+    LaunchedEffect(todayOnly) {
+        viewModel.load(todayOnly)
+    }
+
+    LaunchedEffect(actionState) {
+        if (actionState is UiState.Success) {
             showCreateDialog = false
-            updateActivity = null
-            vm.resetCreateState()
-            vm.load(status = selectedStatus)
+            viewModel.resetActionState()
+            viewModel.load(todayOnly)
         }
     }
 
     Scaffold(
-        topBar = { CrmTopBar(title = "Activities") },
+        topBar = { BackTopBar(title = "Activities", onBack = onBack) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = Primary) {
-                Icon(Icons.Filled.Add, contentDescription = "Add", tint = Color.White)
+            FloatingActionButton(onClick = { showCreateDialog = true }) {
+                Icon(Icons.Filled.Add, contentDescription = "Add activity")
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Status filter chips
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                FilterChip(selected = selectedStatus == null, onClick = { selectedStatus = null; vm.load() }, label = { Text("All") })
-                ACTIVITY_STATUSES.forEach { status ->
-                    FilterChip(
-                        selected = selectedStatus == status,
-                        onClick = { selectedStatus = status; vm.load(status = status) },
-                        label = { Text(status) }
-                    )
-                }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = todayOnly,
+                    onClick = { todayOnly = true },
+                    label = { Text("Today") }
+                )
+                FilterChip(
+                    selected = !todayOnly,
+                    onClick = { todayOnly = false },
+                    label = { Text("All") }
+                )
             }
+            Spacer(Modifier.height(4.dp))
 
-            when (val s = activitiesState) {
-                is UiState.Loading, is UiState.Idle -> LoadingBox()
-                is UiState.Error -> ErrorBox(s.message, onRetry = { vm.load() })
+            when (val s = state) {
+                is UiState.Loading -> LoadingState()
+                is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load(todayOnly) })
                 is UiState.Success -> {
-                    val list = s.data.data
-                    if (list.isEmpty()) EmptyBox("No activities found")
-                    else LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(list) { activity ->
-                            ActivityCard(
-                                activity = activity,
-                                onUpdateStatus = { updateActivity = activity }
-                            )
+                    val activities = s.data.data
+                    if (activities.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Filled.Event,
+                            message = if (todayOnly) "Nothing scheduled for today" else "No activities found"
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(activities, key = { it.id }) { activity ->
+                                ActivityCard(
+                                    activity = activity,
+                                    onMarkDone = {
+                                        viewModel.updateStatus(activity.id.toIntOrNull() ?: 0, "DONE")
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -90,150 +142,159 @@ fun ActivitiesScreen(vm: ActivitiesViewModel = hiltViewModel()) {
 
     if (showCreateDialog) {
         CreateActivityDialog(
-            isLoading = createState is UiState.Loading,
-            error = (createState as? UiState.Error)?.message,
-            onDismiss = { showCreateDialog = false; vm.resetCreateState() },
-            onConfirm = { vm.createActivity(it) }
-        )
-    }
-
-    updateActivity?.let { activity ->
-        UpdateActivityStatusDialog(
-            activity = activity,
-            isLoading = createState is UiState.Loading,
-            error = (createState as? UiState.Error)?.message,
-            onDismiss = { updateActivity = null; vm.resetCreateState() },
-            onConfirm = { status -> vm.updateActivity(activity.id.toInt(), status) }
+            actionState = actionState,
+            onDismiss = {
+                showCreateDialog = false
+                viewModel.resetActionState()
+            },
+            onSubmit = { viewModel.create(it) }
         )
     }
 }
 
 @Composable
-fun ActivityCard(activity: Activity, onUpdateStatus: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
+    val isDone = activity.status.uppercase(Locale.US) in listOf("DONE", "COMPLETED")
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(activity.activityType, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                    activity.policyNo?.let {
-                        Text("Policy #$it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    StatusBadge(activity.status)
-                    Spacer(Modifier.height(4.dp))
-                    TextButton(onClick = onUpdateStatus, contentPadding = PaddingValues(4.dp)) {
-                        Text("Update", style = MaterialTheme.typography.labelSmall)
-                    }
-                }
+                Text(
+                    text = activity.activityType,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Badge(
+                    text = activity.status.uppercase(Locale.US),
+                    color = if (isDone) SuccessGreen else WarningOrange
+                )
             }
-            activity.details?.let {
-                Spacer(Modifier.height(4.dp))
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Spacer(Modifier.height(4.dp))
             Text(
-                "Date: ${activity.activityDate}",
-                style = MaterialTheme.typography.labelSmall,
+                text = formatDate(activity.activityDate) +
+                    (activity.policyNo?.let { " · Policy $it" } ?: ""),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (!activity.details.isNullOrBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = activity.details,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            if (!isDone) {
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onMarkDone) {
+                        Text("Mark Done")
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun CreateActivityDialog(
-    isLoading: Boolean,
-    error: String?,
+private fun CreateActivityDialog(
+    actionState: UiState<*>?,
     onDismiss: () -> Unit,
-    onConfirm: (CreateActivityRequest) -> Unit
+    onSubmit: (CreateActivityRequest) -> Unit
 ) {
-    var policyNo by remember { mutableStateOf("") }
-    var activityType by remember { mutableStateOf("CALL") }
-    var details by remember { mutableStateOf("") }
+    var activityType by remember { mutableStateOf("") }
     var activityDate by remember { mutableStateOf("") }
+    var details by remember { mutableStateOf("") }
+    var policyNo by remember { mutableStateOf("") }
+    val isLoading = actionState is UiState.Loading
+    val errorMessage = (actionState as? UiState.Error)?.message
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Activity") },
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("New Activity") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = policyNo, onValueChange = { policyNo = it }, label = { Text("Policy No (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Text("Type", style = MaterialTheme.typography.labelMedium)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ACTIVITY_TYPES.take(3).forEach { type ->
-                        FilterChip(selected = activityType == type, onClick = { activityType = type }, label = { Text(type, style = MaterialTheme.typography.labelSmall) })
-                    }
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = activityType,
+                    onValueChange = { activityType = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Type (Call, Visit, Meeting…) *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = activityDate,
+                    onValueChange = { activityDate = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Date (YYYY-MM-DD) *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = policyNo,
+                    onValueChange = { policyNo = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Policy No (optional)") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = details,
+                    onValueChange = { details = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Details (optional)") },
+                    enabled = !isLoading
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ACTIVITY_TYPES.drop(3).forEach { type ->
-                        FilterChip(selected = activityType == type, onClick = { activityType = type }, label = { Text(type, style = MaterialTheme.typography.labelSmall) })
-                    }
-                }
-                OutlinedTextField(value = activityDate, onValueChange = { activityDate = it }, label = { Text("Activity Date (YYYY-MM-DD) *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = details, onValueChange = { details = it }, label = { Text("Details") }, modifier = Modifier.fillMaxWidth(), maxLines = 3)
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(CreateActivityRequest(
-                        policyNo = policyNo.trim().toIntOrNull(),
-                        activityType = activityType,
-                        details = details.ifBlank { null },
-                        activityDate = activityDate.trim()
-                    ))
+                    onSubmit(
+                        CreateActivityRequest(
+                            activityType = activityType.trim(),
+                            activityDate = activityDate.trim(),
+                            policyNo = policyNo.trim().toIntOrNull(),
+                            details = details.trim().takeIf { it.isNotBlank() }
+                        )
+                    )
                 },
-                enabled = activityDate.isNotBlank() && !isLoading
+                enabled = activityType.isNotBlank() && activityDate.isNotBlank() && !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Add")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
-}
-
-@Composable
-fun UpdateActivityStatusDialog(
-    activity: Activity,
-    isLoading: Boolean,
-    error: String?,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    var selectedStatus by remember { mutableStateOf(activity.status) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Update Status") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${activity.activityType} • ${activity.activityDate}", style = MaterialTheme.typography.bodyMedium)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ACTIVITY_STATUSES.forEach { status ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(selected = selectedStatus == status, onClick = { selectedStatus = status })
-                            Text(status, style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Create")
                 }
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             }
         },
-        confirmButton = {
-            Button(onClick = { onConfirm(selectedStatus) }, enabled = !isLoading) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Update")
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
             }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        }
     )
 }

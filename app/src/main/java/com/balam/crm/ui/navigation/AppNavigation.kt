@@ -1,87 +1,107 @@
 package com.balam.crm.ui.navigation
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.layout.padding
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.*
-import androidx.navigation.navArgument
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.balam.crm.data.api.TokenStore
-import com.balam.crm.ui.screens.*
+import com.balam.crm.ui.screens.ActivitiesScreen
+import com.balam.crm.ui.screens.ClientDetailScreen
+import com.balam.crm.ui.screens.ClientsScreen
+import com.balam.crm.ui.screens.CommissionScreen
+import com.balam.crm.ui.screens.DashboardScreen
+import com.balam.crm.ui.screens.FUPScreen
+import com.balam.crm.ui.screens.FamiliesScreen
+import com.balam.crm.ui.screens.FamilyDetailScreen
+import com.balam.crm.ui.screens.GSTScreen
+import com.balam.crm.ui.screens.LeadsScreen
+import com.balam.crm.ui.screens.LoansScreen
+import com.balam.crm.ui.screens.LoginScreen
+import com.balam.crm.ui.screens.MoreScreen
+import com.balam.crm.ui.screens.PoliciesScreen
+import com.balam.crm.ui.screens.PolicyDetailScreen
+import com.balam.crm.ui.screens.ProfileScreen
+import com.balam.crm.ui.screens.RegisterScreen
+import com.balam.crm.ui.screens.ReportsScreen
+import com.balam.crm.ui.screens.SBScreen
 
-sealed class Screen(val route: String) {
-    object Login : Screen("login")
-    object Register : Screen("register")
-    object Dashboard : Screen("dashboard")
-    object Policies : Screen("policies")
-    object PolicyDetail : Screen("policy/{policyNo}") // policyNo is Int
-    object FUP : Screen("fup")
-    object Families : Screen("families")
-    object FamilyDetail : Screen("family/{familyCode}")
-    object Clients : Screen("clients")
-    object ClientDetail : Screen("client/{id}")
-    object Commission : Screen("commission")
-    object Loans : Screen("loans")
-    object SB : Screen("sb")
-    object Leads : Screen("leads")
-    object Activities : Screen("activities")
-    object GST : Screen("gst")
-    object Reports : Screen("reports")
-    object Profile : Screen("profile")
-    object More : Screen("more")
+object Routes {
+    const val LOGIN = "login"
+    const val REGISTER = "register"
+    const val DASHBOARD = "dashboard"
+    const val POLICIES = "policies"
+    const val FUP = "fup"
+    const val FAMILIES = "families"
+    const val MORE = "more"
+    const val CLIENTS = "clients"
+    const val COMMISSION = "commission"
+    const val LOANS = "loans"
+    const val SB = "sb"
+    const val LEADS = "leads"
+    const val ACTIVITIES = "activities"
+    const val GST = "gst"
+    const val REPORTS = "reports"
+    const val PROFILE = "profile"
 
-    fun withArgs(vararg args: String): String {
-        var result = route
-        args.forEach { arg ->
-            result = result.replaceFirst(Regex("\\{[^}]+}"), arg)
-        }
-        return result
-    }
+    fun policyDetail(policyNo: Int) = "policy/$policyNo"
+    fun familyDetail(familyCode: String) = "family/$familyCode"
+    fun clientDetail(id: Int) = "client/$id"
 }
 
-data class BottomNavItem(val screen: Screen, val label: String, val icon: ImageVector)
+private data class BottomTab(val route: String, val label: String, val icon: ImageVector)
 
-val bottomNavItems = listOf(
-    BottomNavItem(Screen.Dashboard, "Dashboard", Icons.Filled.Dashboard),
-    BottomNavItem(Screen.Policies, "Policies", Icons.Filled.Policy),
-    BottomNavItem(Screen.FUP, "FUP", Icons.Filled.Alarm),
-    BottomNavItem(Screen.Families, "Families", Icons.Filled.FamilyRestroom),
-    BottomNavItem(Screen.More, "More", Icons.Filled.MoreHoriz)
+private val bottomTabs = listOf(
+    BottomTab(Routes.DASHBOARD, "Dashboard", Icons.Filled.Home),
+    BottomTab(Routes.POLICIES, "Policies", Icons.Filled.Description),
+    BottomTab(Routes.FUP, "FUP", Icons.Filled.DateRange),
+    BottomTab(Routes.FAMILIES, "Families", Icons.Filled.Groups),
+    BottomTab(Routes.MORE, "More", Icons.Filled.MoreHoriz)
 )
 
 @Composable
 fun AppNavigation(tokenStore: TokenStore) {
     val navController = rememberNavController()
-    val startDestination = remember { if (tokenStore.isLoggedIn()) Screen.Dashboard.route else Screen.Login.route }
-
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
-    val showBottomBar = currentRoute in bottomNavItems.map { it.screen.route }
+    val startDestination = remember { if (tokenStore.isLoggedIn()) Routes.DASHBOARD else Routes.LOGIN }
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val showBottomBar = currentRoute in bottomTabs.map { it.route }
 
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
-                    bottomNavItems.forEach { item ->
+                    bottomTabs.forEach { tab ->
                         NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
-                            selected = currentRoute == item.screen.route,
+                            selected = currentRoute == tab.route,
                             onClick = {
-                                navController.navigate(item.screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                navController.navigate(tab.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }
+                            },
+                            icon = { Icon(tab.icon, contentDescription = tab.label) },
+                            label = { Text(tab.label) }
                         )
                     }
                 }
@@ -93,106 +113,94 @@ fun AppNavigation(tokenStore: TokenStore) {
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Login.route) {
+            composable(Routes.LOGIN) {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Screen.Dashboard.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                        navController.navigate(Routes.DASHBOARD) {
+                            popUpTo(0) { inclusive = true }
                         }
                     },
-                    onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                    onRegisterClick = { navController.navigate(Routes.REGISTER) }
                 )
             }
-            composable(Screen.Register.route) {
-                RegisterScreen(
-                    onRegisterSuccess = { navController.popBackStack() },
-                    onNavigateToLogin = { navController.popBackStack() }
+            composable(Routes.REGISTER) {
+                RegisterScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.DASHBOARD) {
+                DashboardScreen(
+                    onPolicyClick = { navController.navigate(Routes.policyDetail(it)) },
+                    onNavigate = { navController.navigate(it) }
                 )
             }
-            composable(Screen.Dashboard.route) {
-                DashboardScreen(navController = navController)
+            composable(Routes.POLICIES) {
+                PoliciesScreen(onPolicyClick = { navController.navigate(Routes.policyDetail(it)) })
             }
-            composable(Screen.Policies.route) {
-                PoliciesScreen(
-                    onPolicyClick = { policyNo ->
-                        navController.navigate(Screen.PolicyDetail.withArgs(policyNo.toString()))
-                    }
-                )
-            }
-            composable(
-                Screen.PolicyDetail.route,
-                arguments = listOf(navArgument("policyNo") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val policyNo = backStackEntry.arguments?.getInt("policyNo") ?: 0
+            composable("policy/{policyNo}") { entry ->
+                val policyNo = entry.arguments?.getString("policyNo")?.toIntOrNull() ?: 0
                 PolicyDetailScreen(policyNo = policyNo, onBack = { navController.popBackStack() })
             }
-            composable(Screen.FUP.route) {
-                FUPScreen()
+            composable(Routes.FUP) {
+                FUPScreen(onPolicyClick = { navController.navigate(Routes.policyDetail(it)) })
             }
-            composable(Screen.Families.route) {
-                FamiliesScreen(
-                    onFamilyClick = { familyCode ->
-                        navController.navigate(Screen.FamilyDetail.withArgs(familyCode))
-                    }
-                )
+            composable(Routes.FAMILIES) {
+                FamiliesScreen(onFamilyClick = { navController.navigate(Routes.familyDetail(it)) })
             }
-            composable(
-                Screen.FamilyDetail.route,
-                arguments = listOf(navArgument("familyCode") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val familyCode = backStackEntry.arguments?.getString("familyCode") ?: ""
+            composable("family/{familyCode}") { entry ->
+                val familyCode = entry.arguments?.getString("familyCode") ?: ""
                 FamilyDetailScreen(
                     familyCode = familyCode,
                     onBack = { navController.popBackStack() },
-                    onClientClick = { id -> navController.navigate(Screen.ClientDetail.withArgs(id.toString())) },
-                    onPolicyClick = { policyNo -> navController.navigate(Screen.PolicyDetail.withArgs(policyNo.toString())) }
+                    onPolicyClick = { navController.navigate(Routes.policyDetail(it)) },
+                    onClientClick = { navController.navigate(Routes.clientDetail(it)) }
                 )
             }
-            composable(Screen.Clients.route) {
+            composable(Routes.CLIENTS) {
                 ClientsScreen(
-                    onClientClick = { id -> navController.navigate(Screen.ClientDetail.withArgs(id.toString())) }
+                    onBack = { navController.popBackStack() },
+                    onClientClick = { navController.navigate(Routes.clientDetail(it)) }
                 )
             }
-            composable(
-                Screen.ClientDetail.route,
-                arguments = listOf(navArgument("id") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getInt("id") ?: 0
-                ClientDetailScreen(id = id, onBack = { navController.popBackStack() })
+            composable("client/{id}") { entry ->
+                val id = entry.arguments?.getString("id")?.toIntOrNull() ?: 0
+                ClientDetailScreen(
+                    clientId = id,
+                    onBack = { navController.popBackStack() },
+                    onPolicyClick = { navController.navigate(Routes.policyDetail(it)) }
+                )
             }
-            composable(Screen.Commission.route) {
-                CommissionScreen()
+            composable(Routes.COMMISSION) {
+                CommissionScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.Loans.route) {
-                LoansScreen()
+            composable(Routes.LOANS) {
+                LoansScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.SB.route) {
-                SBScreen()
+            composable(Routes.SB) {
+                SBScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.Leads.route) {
-                LeadsScreen()
+            composable(Routes.LEADS) {
+                LeadsScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.Activities.route) {
-                ActivitiesScreen()
+            composable(Routes.ACTIVITIES) {
+                ActivitiesScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.GST.route) {
-                GSTScreen()
+            composable(Routes.GST) {
+                GSTScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.Reports.route) {
-                ReportsScreen()
+            composable(Routes.REPORTS) {
+                ReportsScreen(onBack = { navController.popBackStack() })
             }
-            composable(Screen.Profile.route) {
-                ProfileScreen(
+            composable(Routes.PROFILE) {
+                ProfileScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.MORE) {
+                MoreScreen(
+                    onNavigate = { navController.navigate(it) },
                     onLogout = {
-                        tokenStore.clear()
-                        navController.navigate(Screen.Login.route) {
+                        navController.navigate(Routes.LOGIN) {
                             popUpTo(0) { inclusive = true }
                         }
                     }
                 )
-            }
-            composable(Screen.More.route) {
-                MoreScreen(navController = navController)
             }
         }
     }

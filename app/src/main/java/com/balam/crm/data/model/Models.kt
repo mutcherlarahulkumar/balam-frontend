@@ -1,8 +1,6 @@
 package com.balam.crm.data.model
 
-import com.google.gson.annotations.SerializedName
-
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ---------- Auth ----------
 
 data class LoginRequest(val identifier: String, val password: String)
 
@@ -48,10 +46,7 @@ data class AuthResponse(val token: String, val expiresAt: String?, val agent: Ag
 
 data class MessageResponse(val message: String)
 
-// ─── Policies ────────────────────────────────────────────────────────────────
-
-enum class PolicyStatus { IF, LA, PU, SU, MA, CL, EX }
-enum class FUPStatus { PAID, DUE, OVERDUE, LAPSED }
+// ---------- Policies ----------
 
 data class PolicyListItem(
     val id: Int,
@@ -70,37 +65,6 @@ data class PolicyListItem(
     val status: String,
     val fupStatus: String,
     val daysUntilLapse: Int
-)
-
-data class Policy(
-    val id: Int,
-    val policyNo: Int,
-    val familyCode: String,
-    val persCode: String?,
-    val issueDate: String?,
-    val matDate: String?,
-    val paymentMode: String?,
-    val premium: Double,
-    val sumAssured: Double,
-    val plan: Int?,
-    val planName: String?,
-    val term: Int?,
-    val ppt: Int?,
-    val nextPremium: String?,
-    val matAmount: Double?,
-    val nominee: String?,
-    val relation: String?,
-    val agCode: String?,
-    val statCd: String?,
-    val status: String,
-    val fupStatus: String,
-    val age: Int?,
-    val lastPaid: String?,
-    val neft: String?,
-    val lastFup: String?,
-    val branch: String?,
-    val dab: Int?,
-    val termRider: Int?
 )
 
 data class FUPHistory(
@@ -141,20 +105,14 @@ data class PolicyDetail(
     val branch: String?,
     val dab: Int?,
     val termRider: Int?,
-    // extra on detail:
     val fupHistory: List<FUPHistory>,
     val loans: List<Loan>,
     val sbRecords: List<SBItem>
 )
 
-data class PoliciesResponse(
-    val data: List<PolicyListItem>,
-    val total: Int,
-    val page: Int,
-    val limit: Int
-)
+data class PoliciesResponse(val data: List<PolicyListItem>, val total: Int, val page: Int, val limit: Int)
 
-// ─── Families ────────────────────────────────────────────────────────────────
+// ---------- Families ----------
 
 data class FamilyListItem(
     val id: Int,
@@ -165,13 +123,6 @@ data class FamilyListItem(
     val pincode: String?,
     val memberCount: Int,
     val policyCount: Int
-)
-
-data class FamiliesResponse(
-    val data: List<FamilyListItem>,
-    val total: Int,
-    val page: Int,
-    val limit: Int
 )
 
 data class CreateFamilyRequest(
@@ -202,7 +153,9 @@ data class FamilyDetail(
     val policies: List<PolicyListItem>
 )
 
-// ─── Clients ─────────────────────────────────────────────────────────────────
+data class FamiliesResponse(val data: List<FamilyListItem>, val total: Int, val page: Int, val limit: Int)
+
+// ---------- Clients ----------
 
 data class Client(
     val id: Int,
@@ -268,12 +221,7 @@ data class ClientDetail(
     val documents: List<Document>
 )
 
-data class ClientsResponse(
-    val data: List<Client>,
-    val total: Int,
-    val page: Int,
-    val limit: Int
-)
+data class ClientsResponse(val data: List<Client>, val total: Int, val page: Int, val limit: Int)
 
 data class CreateClientRequest(
     val familyCode: String,
@@ -288,7 +236,7 @@ data class CreateClientRequest(
     val address: String? = null
 )
 
-// ─── FUP ─────────────────────────────────────────────────────────────────────
+// ---------- FUP ----------
 
 data class FUPDueItem(
     val policyNo: Int,
@@ -303,12 +251,7 @@ data class FUPDueItem(
     val daysUntilLapse: Int
 )
 
-data class FUPResponse(
-    val data: List<FUPDueItem>,
-    val total: Int,
-    val page: Int,
-    val limit: Int
-)
+data class FUPResponse(val data: List<FUPDueItem>, val total: Int, val page: Int, val limit: Int)
 
 data class FUPUpdateRequest(
     val policyNo: Int,
@@ -317,7 +260,7 @@ data class FUPUpdateRequest(
     val reason: String? = null
 )
 
-// ─── Commission ───────────────────────────────────────────────────────────────
+// ---------- Commission ----------
 
 data class Commission(
     val id: String,
@@ -332,19 +275,13 @@ data class Commission(
     val payDate: String?
 )
 
-data class CommissionResponse(
-    val data: List<Commission>,
-    val total: Int?,
-    val page: Int?,
-    val limit: Int?
-)
+data class CommissionResponse(val data: List<Commission>, val total: Int?, val page: Int?, val limit: Int?)
 
 data class CommissionMonthSummary(val month: String, val totalCommission: Double, val policiesBilled: Int)
+
 data class CommissionYearlySummary(val year: Int, val firstYear: Double, val renewal: Double, val bonus: Double, val gross: Double)
-data class CommissionSummaryResponse(
-    val currentMonth: CommissionMonthSummary,
-    val yearly: List<CommissionYearlySummary>
-)
+
+data class CommissionSummaryResponse(val currentMonth: CommissionMonthSummary, val yearly: List<CommissionYearlySummary>)
 
 data class CreateCommissionRequest(
     val policyNo: Int,
@@ -357,7 +294,7 @@ data class CreateCommissionRequest(
     val payDate: String? = null
 )
 
-// ─── Loans ───────────────────────────────────────────────────────────────────
+// ---------- Loans ----------
 
 data class Loan(
     val id: Int,
@@ -371,14 +308,9 @@ data class Loan(
 
 data class LoansResponse(val data: List<Loan>)
 
-data class CreateLoanRequest(
-    val policyNo: Int,
-    val loanDate: String,
-    val loanAmount: Int,
-    val interestDueDate: String
-)
+data class CreateLoanRequest(val policyNo: Int, val loanDate: String, val loanAmount: Int, val interestDueDate: String)
 
-// ─── Survival Benefits ───────────────────────────────────────────────────────
+// ---------- SB ----------
 
 data class SBItem(
     val id: String,
@@ -392,16 +324,11 @@ data class SBItem(
 
 data class SBResponse(val data: List<SBItem>)
 
-data class CreateSBRequest(
-    val policyNo: Int,
-    val sbDueDate: String,
-    val sbAmount: Double,
-    val instalmentNo: Int
-)
+data class CreateSBRequest(val policyNo: Int, val sbDueDate: String, val sbAmount: Double, val instalmentNo: Int)
 
 data class MarkSBPaidRequest(val paidDate: String, val chequeNo: String? = null)
 
-// ─── Leads ───────────────────────────────────────────────────────────────────
+// ---------- Leads ----------
 
 data class Lead(
     val id: String,
@@ -421,7 +348,7 @@ data class CreateLeadRequest(
     val searchTerm: String? = null
 )
 
-// ─── Activities ───────────────────────────────────────────────────────────────
+// ---------- Activities ----------
 
 data class Activity(
     val id: String,
@@ -443,7 +370,7 @@ data class CreateActivityRequest(
 
 data class UpdateActivityRequest(val status: String)
 
-// ─── GST ──────────────────────────────────────────────────────────────────────
+// ---------- GST ----------
 
 data class GSTCalculation(
     val policyNo: Int?,
@@ -458,7 +385,8 @@ data class GSTCalculation(
     val historicalNote: String?
 )
 
-// ─── Reports ──────────────────────────────────────────────────────────────────
+// ---------- Reports ----------
 
 data class CashInOutItem(val month: String, val income: Double, val expense: Double, val net: Double)
+
 data class CashInOutResponse(val data: List<CashInOutItem>)

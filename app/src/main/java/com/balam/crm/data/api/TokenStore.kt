@@ -15,35 +15,51 @@ class TokenStore @Inject constructor(@ApplicationContext private val context: Co
 
     private val gson = Gson()
 
-    private val prefs: SharedPreferences by lazy {
+    private val prefs: SharedPreferences = try {
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        EncryptedSharedPreferences.create(
+            "balam_secure_prefs",
+            masterKeyAlias,
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    } catch (e: Exception) {
+        context.getSharedPreferences("balam_prefs_fallback", Context.MODE_PRIVATE)
+    }
+
+    fun getToken(): String? = try {
+        prefs.getString(KEY_TOKEN, null)
+    } catch (e: Exception) {
+        null
+    }
+
+    fun saveToken(token: String) {
         try {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            EncryptedSharedPreferences.create(
-                "balam_secure_prefs",
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-        } catch (e: Exception) {
-            // Fall back to regular prefs if Keystore fails (some emulators/devices)
-            context.getSharedPreferences("balam_prefs_fallback", Context.MODE_PRIVATE)
+            prefs.edit().putString(KEY_TOKEN, token).apply()
+        } catch (_: Exception) {
         }
     }
 
-    fun saveToken(token: String) = prefs.edit().putString(KEY_TOKEN, token).apply()
-
-    fun getToken(): String? = try { prefs.getString(KEY_TOKEN, null) } catch (e: Exception) { null }
-
-    fun saveAgent(agent: Agent) = prefs.edit().putString(KEY_AGENT, gson.toJson(agent)).apply()
-
     fun getAgent(): Agent? = try {
-        prefs.getString(KEY_AGENT, null)?.let {
-            gson.fromJson(it, Agent::class.java)
-        }
-    } catch (e: Exception) { null }
+        prefs.getString(KEY_AGENT, null)?.let { gson.fromJson(it, Agent::class.java) }
+    } catch (e: Exception) {
+        null
+    }
 
-    fun clear() = try { prefs.edit().remove(KEY_TOKEN).remove(KEY_AGENT).apply() } catch (_: Exception) {}
+    fun saveAgent(agent: Agent) {
+        try {
+            prefs.edit().putString(KEY_AGENT, gson.toJson(agent)).apply()
+        } catch (_: Exception) {
+        }
+    }
+
+    fun clear() {
+        try {
+            prefs.edit().remove(KEY_TOKEN).remove(KEY_AGENT).apply()
+        } catch (_: Exception) {
+        }
+    }
 
     fun isLoggedIn(): Boolean = getToken() != null
 

@@ -1,27 +1,32 @@
 package com.balam.crm.data.api
 
 import com.balam.crm.data.model.*
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
+    // Auth
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): AuthResponse
+    suspend fun login(@Body body: LoginRequest): AuthResponse
 
     @GET("auth/me")
-    suspend fun getMe(): Agent
+    suspend fun me(): Agent
 
     @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): MessageResponse
+    suspend fun register(@Body body: RegisterRequest): MessageResponse
 
     @POST("auth/change-password")
-    suspend fun changePassword(@Body request: ChangePasswordRequest): MessageResponse
+    suspend fun changePassword(@Body body: ChangePasswordRequest): MessageResponse
 
     @PUT("auth/profile")
-    suspend fun updateProfile(@Body request: UpdateProfileRequest): Agent
+    suspend fun updateProfile(@Body body: UpdateProfileRequest): Agent
 
-    // ── Policies ──────────────────────────────────────────────────────────────
+    // Policies
     @GET("policies")
     suspend fun getPolicies(
         @Query("page") page: Int = 1,
@@ -31,9 +36,9 @@ interface ApiService {
     ): PoliciesResponse
 
     @GET("policies/{policyNo}")
-    suspend fun getPolicyDetail(@Path("policyNo") policyNo: Int): PolicyDetail
+    suspend fun getPolicy(@Path("policyNo") policyNo: Int): PolicyDetail
 
-    // ── Families ──────────────────────────────────────────────────────────────
+    // Families
     @GET("families")
     suspend fun getFamilies(
         @Query("search") search: String? = null,
@@ -42,18 +47,15 @@ interface ApiService {
     ): FamiliesResponse
 
     @POST("families")
-    suspend fun createFamily(@Body request: CreateFamilyRequest): CreateFamilyResponse
+    suspend fun createFamily(@Body body: CreateFamilyRequest): CreateFamilyResponse
 
     @GET("families/{familyCode}")
-    suspend fun getFamilyDetail(@Path("familyCode") familyCode: String): FamilyDetail
+    suspend fun getFamily(@Path("familyCode") familyCode: String): FamilyDetail
 
     @PUT("families/{familyCode}")
-    suspend fun updateFamily(
-        @Path("familyCode") familyCode: String,
-        @Body request: CreateFamilyRequest
-    ): MessageResponse
+    suspend fun updateFamily(@Path("familyCode") familyCode: String, @Body body: CreateFamilyRequest): MessageResponse
 
-    // ── Clients ───────────────────────────────────────────────────────────────
+    // Clients
     @GET("clients")
     suspend fun getClients(
         @Query("search") search: String? = null,
@@ -64,45 +66,45 @@ interface ApiService {
     ): ClientsResponse
 
     @POST("clients")
-    suspend fun createClient(@Body request: CreateClientRequest): Client
+    suspend fun createClient(@Body body: CreateClientRequest): Client
 
     @GET("clients/{id}")
-    suspend fun getClientDetail(@Path("id") id: Int): ClientDetail
+    suspend fun getClient(@Path("id") id: Int): ClientDetail
 
     @PUT("clients/{id}")
-    suspend fun updateClient(@Path("id") id: Int, @Body request: CreateClientRequest): Client
+    suspend fun updateClient(@Path("id") id: Int, @Body body: CreateClientRequest): Client
 
-    // ── FUP ───────────────────────────────────────────────────────────────────
+    // FUP
     @GET("fup/due")
-    suspend fun getFUPDue(
+    suspend fun getFupDue(
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
     ): FUPResponse
 
     @POST("fup/update")
-    suspend fun updateFUP(@Body request: FUPUpdateRequest): MessageResponse
+    suspend fun updateFup(@Body body: FUPUpdateRequest): MessageResponse
 
-    // ── Commission ────────────────────────────────────────────────────────────
+    // Commission
     @GET("commission")
-    suspend fun getCommissions(
+    suspend fun getCommission(
         @Query("year") year: Int? = null,
         @Query("month") month: Int? = null
     ): CommissionResponse
 
     @POST("commission")
-    suspend fun createCommission(@Body request: CreateCommissionRequest): Commission
+    suspend fun createCommission(@Body body: CreateCommissionRequest): Commission
 
     @GET("commission/summary")
     suspend fun getCommissionSummary(): CommissionSummaryResponse
 
-    // ── Loans ─────────────────────────────────────────────────────────────────
+    // Loans
     @GET("loans")
     suspend fun getLoans(@Query("policyNo") policyNo: Int? = null): LoansResponse
 
     @POST("loans")
-    suspend fun createLoan(@Body request: CreateLoanRequest): Loan
+    suspend fun createLoan(@Body body: CreateLoanRequest): Loan
 
-    // ── Survival Benefits ─────────────────────────────────────────────────────
+    // SB
     @GET("sb")
     suspend fun getSB(
         @Query("year") year: Int? = null,
@@ -111,22 +113,22 @@ interface ApiService {
     ): SBResponse
 
     @POST("sb")
-    suspend fun createSB(@Body request: CreateSBRequest): SBItem
+    suspend fun createSB(@Body body: CreateSBRequest): SBItem
 
     @PUT("sb/{id}/paid")
-    suspend fun markSBPaid(@Path("id") id: Int, @Body request: MarkSBPaidRequest): SBItem
+    suspend fun markSBPaid(@Path("id") id: Int, @Body body: MarkSBPaidRequest): SBItem
 
-    // ── Leads ─────────────────────────────────────────────────────────────────
+    // Leads
     @GET("leads")
     suspend fun getLeads(@Query("search") search: String? = null): LeadsResponse
 
     @POST("leads")
-    suspend fun createLead(@Body request: CreateLeadRequest): Lead
+    suspend fun createLead(@Body body: CreateLeadRequest): Lead
 
     @PUT("leads/{id}")
-    suspend fun updateLead(@Path("id") id: Int, @Body request: CreateLeadRequest): Lead
+    suspend fun updateLead(@Path("id") id: Int, @Body body: CreateLeadRequest): Lead
 
-    // ── Activities ────────────────────────────────────────────────────────────
+    // Activities
     @GET("activities")
     suspend fun getActivities(
         @Query("type") type: String? = null,
@@ -137,16 +139,16 @@ interface ApiService {
     suspend fun getTodayActivities(): ActivitiesResponse
 
     @POST("activities")
-    suspend fun createActivity(@Body request: CreateActivityRequest): Activity
+    suspend fun createActivity(@Body body: CreateActivityRequest): Activity
 
     @PUT("activities/{id}")
-    suspend fun updateActivity(@Path("id") id: Int, @Body request: UpdateActivityRequest): Activity
+    suspend fun updateActivity(@Path("id") id: Int, @Body body: UpdateActivityRequest): Activity
 
-    // ── GST ───────────────────────────────────────────────────────────────────
+    // GST
     @GET("gst/calculate")
     suspend fun calculateGST(@Query("policyNo") policyNo: Int): GSTCalculation
 
-    // ── Reports ───────────────────────────────────────────────────────────────
+    // Reports
     @GET("reports/cashinout")
     suspend fun getCashInOut(): CashInOutResponse
 }

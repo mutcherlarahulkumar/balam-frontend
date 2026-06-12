@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -257,4 +259,47 @@ fun SearchField(
         singleLine = true,
         shape = RoundedCornerShape(14.dp)
     )
+}
+
+@Composable
+fun ShareButtons(mobile: String?, message: String, modifier: Modifier = Modifier) {
+    if (mobile.isNullOrBlank()) return
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val cleanMobile = mobile.filter { it.isDigit() }.let { if (it.length > 10) it.takeLast(10) else it }
+
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Button(
+            onClick = {
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                    data = android.net.Uri.parse("https://wa.me/91$cleanMobile?text=${android.net.Uri.encode(message)}")
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (_: Exception) {
+                }
+            },
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(Icons.Filled.Share, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("WhatsApp")
+        }
+        Button(
+            onClick = {
+                val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                    data = android.net.Uri.parse("smsto:$cleanMobile")
+                    putExtra("sms_body", message)
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (_: Exception) {
+                }
+            },
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(Icons.Filled.Sms, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("SMS")
+        }
+    }
 }

@@ -78,7 +78,7 @@ class FUPViewModel @Inject constructor(private val api: ApiService) : ViewModel(
         viewModelScope.launch {
             _state.value = UiState.Loading
             try {
-                _state.value = UiState.Success(api.getFupDue(page = 1, limit = 100))
+                _state.value = UiState.Success(api.getFupDue())
             } catch (e: Exception) {
                 _state.value = UiState.Error(e.friendlyMessage())
             }

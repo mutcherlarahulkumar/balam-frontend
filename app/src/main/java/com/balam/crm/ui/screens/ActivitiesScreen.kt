@@ -213,6 +213,7 @@ private fun CreateActivityDialog(
     onDismiss: () -> Unit,
     onSubmit: (CreateActivityRequest) -> Unit
 ) {
+    var clientId by remember { mutableStateOf("") }
     var activityType by remember { mutableStateOf("") }
     var activityDate by remember { mutableStateOf("") }
     var details by remember { mutableStateOf("") }
@@ -226,10 +227,20 @@ private fun CreateActivityDialog(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
+                    value = clientId,
+                    onValueChange = { clientId = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Client ID *") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
                     value = activityType,
                     onValueChange = { activityType = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Type (Call, Visit, Meeting…) *") },
+                    label = { Text("Type (CALL, MEETING, DEMO, EMAIL, PROPOSAL, MEDICAL, REMINDER) *") },
                     singleLine = true,
                     enabled = !isLoading
                 )
@@ -275,14 +286,16 @@ private fun CreateActivityDialog(
                 onClick = {
                     onSubmit(
                         CreateActivityRequest(
-                            activityType = activityType.trim(),
+                            clientId = clientId.trim().toIntOrNull() ?: 0,
+                            activityType = activityType.trim().uppercase(Locale.US),
                             activityDate = activityDate.trim(),
                             policyNo = policyNo.trim().toIntOrNull(),
                             details = details.trim().takeIf { it.isNotBlank() }
                         )
                     )
                 },
-                enabled = activityType.isNotBlank() && activityDate.isNotBlank() && !isLoading
+                enabled = clientId.trim().toIntOrNull() != null &&
+                    activityType.isNotBlank() && activityDate.isNotBlank() && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

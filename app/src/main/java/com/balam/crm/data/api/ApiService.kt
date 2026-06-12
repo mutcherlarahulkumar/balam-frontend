@@ -1,10 +1,13 @@
 package com.balam.crm.data.api
 
 import com.balam.crm.data.model.*
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -23,8 +26,18 @@ interface ApiService {
     @POST("auth/change-password")
     suspend fun changePassword(@Body body: ChangePasswordRequest): MessageResponse
 
-    @PUT("auth/profile")
+    @POST("auth/refresh")
+    suspend fun refreshToken(): AuthResponse
+
+    @GET("agent/profile")
+    suspend fun getProfile(): Agent
+
+    @PUT("agent/profile")
     suspend fun updateProfile(@Body body: UpdateProfileRequest): Agent
+
+    @Multipart
+    @POST("agent/import")
+    suspend fun importAgentData(@Part file: MultipartBody.Part): MessageResponse
 
     // Policies
     @GET("policies")
@@ -35,8 +48,14 @@ interface ApiService {
         @Query("status") status: String? = null
     ): PoliciesResponse
 
+    @POST("policies")
+    suspend fun createPolicy(@Body body: CreatePolicyRequest): MessageResponse
+
     @GET("policies/{policyNo}")
     suspend fun getPolicy(@Path("policyNo") policyNo: Int): PolicyDetail
+
+    @PUT("policies/{policyNo}")
+    suspend fun updatePolicy(@Path("policyNo") policyNo: Int, @Body body: UpdatePolicyRequest): MessageResponse
 
     // Families
     @GET("families")
@@ -53,7 +72,7 @@ interface ApiService {
     suspend fun getFamily(@Path("familyCode") familyCode: String): FamilyDetail
 
     @PUT("families/{familyCode}")
-    suspend fun updateFamily(@Path("familyCode") familyCode: String, @Body body: CreateFamilyRequest): MessageResponse
+    suspend fun updateFamily(@Path("familyCode") familyCode: String, @Body body: UpdateFamilyRequest): MessageResponse
 
     // Clients
     @GET("clients")
@@ -68,21 +87,38 @@ interface ApiService {
     @POST("clients")
     suspend fun createClient(@Body body: CreateClientRequest): Client
 
+    @GET("clients/search")
+    suspend fun searchClients(
+        @Query("q") q: String,
+        @Query("limit") limit: Int? = null
+    ): ClientsResponse
+
     @GET("clients/{id}")
     suspend fun getClient(@Path("id") id: Int): ClientDetail
 
     @PUT("clients/{id}")
-    suspend fun updateClient(@Path("id") id: Int, @Body body: CreateClientRequest): Client
+    suspend fun updateClient(@Path("id") id: Int, @Body body: UpdateClientRequest): Client
+
+    // Plans
+    @GET("plans")
+    suspend fun getPlans(): PlansResponse
 
     // FUP
     @GET("fup/due")
     suspend fun getFupDue(
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 20
+        @Query("year") year: Int? = null,
+        @Query("month") month: Int? = null,
+        @Query("overdueDays") overdueDays: Int? = null
     ): FUPResponse
 
     @POST("fup/update")
     suspend fun updateFup(@Body body: FUPUpdateRequest): MessageResponse
+
+    @GET("fup/history/{policyNo}")
+    suspend fun getFupHistory(@Path("policyNo") policyNo: Int): FUPHistoryResponse
+
+    @GET("fup/multipledue/{policyNo}")
+    suspend fun getFupMultipleDue(@Path("policyNo") policyNo: Int): FUPMultipleDueResponse
 
     // Commission
     @GET("commission")
@@ -96,6 +132,12 @@ interface ApiService {
 
     @GET("commission/summary")
     suspend fun getCommissionSummary(): CommissionSummaryResponse
+
+    @GET("commission/calculate")
+    suspend fun calculateCommission(
+        @Query("policyNo") policyNo: Int,
+        @Query("year") year: Int
+    ): CommissionCalculation
 
     // Loans
     @GET("loans")
@@ -115,7 +157,7 @@ interface ApiService {
     @POST("sb")
     suspend fun createSB(@Body body: CreateSBRequest): SBItem
 
-    @PUT("sb/{id}/paid")
+    @PUT("sb/{id}/mark-paid")
     suspend fun markSBPaid(@Path("id") id: Int, @Body body: MarkSBPaidRequest): SBItem
 
     // Leads
@@ -131,8 +173,7 @@ interface ApiService {
     // Activities
     @GET("activities")
     suspend fun getActivities(
-        @Query("type") type: String? = null,
-        @Query("status") status: String? = null
+        @Query("clientId") clientId: Int? = null
     ): ActivitiesResponse
 
     @GET("activities/today")
@@ -151,4 +192,16 @@ interface ApiService {
     // Reports
     @GET("reports/cashinout")
     suspend fun getCashInOut(): CashInOutResponse
+
+    @GET("reports/cashflow")
+    suspend fun getCashflowReport(@Query("familyCode") familyCode: String): CashflowReportResponse
+
+    @GET("reports/status")
+    suspend fun getStatusReport(@Query("familyCode") familyCode: String): StatusReportResponse
+
+    @GET("reports/calendar")
+    suspend fun getCalendarReport(@Query("familyCode") familyCode: String): CalendarReportResponse
+
+    @POST("reports/refresh")
+    suspend fun refreshReports(@Body body: RefreshReportsRequest): MessageResponse
 }

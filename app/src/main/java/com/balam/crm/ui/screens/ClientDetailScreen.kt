@@ -24,6 +24,7 @@ import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.InfoRow
 import com.balam.crm.ui.components.LoadingState
 import com.balam.crm.ui.components.SectionCard
+import com.balam.crm.ui.components.ShareButtons
 import com.balam.crm.viewmodel.ClientDetailViewModel
 import com.balam.crm.viewmodel.UiState
 
@@ -76,6 +77,14 @@ fun ClientDetailScreen(
                             InfoRow("City", client.city)
                             InfoRow("State", client.state)
                             InfoRow("Source", client.source)
+                        }
+                    }
+                    if (!client.mobile.isNullOrBlank()) {
+                        item {
+                            ShareButtons(
+                                mobile = client.mobile,
+                                message = "Hi ${client.name}, this is regarding your insurance policy. Please contact us for any queries."
+                            )
                         }
                     }
                     if (!client.comment.isNullOrBlank()) {

@@ -46,6 +46,14 @@ data class AuthResponse(val token: String, val expiresAt: String?, val agent: Ag
 
 data class MessageResponse(val message: String)
 
+// ---------- Errors ----------
+
+data class FieldError(val field: String, val message: String)
+
+data class ErrorResponse(val error: String, val message: String)
+
+data class ValidationErrorResponse(val error: String, val errors: List<FieldError>)
+
 // ---------- Policies ----------
 
 data class PolicyListItem(
@@ -112,6 +120,36 @@ data class PolicyDetail(
 
 data class PoliciesResponse(val data: List<PolicyListItem>, val total: Int, val page: Int, val limit: Int)
 
+data class CreatePolicyRequest(
+    val policyNo: Int,
+    val familyCode: String,
+    val persCode: String,
+    val planNo: String,
+    val issueDate: String,
+    val matDate: String,
+    val term: Int,
+    val ppt: Int,
+    val sumAssured: Double,
+    val premium: Double,
+    val paymentMode: String,
+    val nextPremium: String,
+    val nominee: String,
+    val relation: String,
+    val branch: String? = null,
+    val neft: String? = null,
+    val dab: Int? = null,
+    val termRider: Int? = null
+)
+
+data class UpdatePolicyRequest(
+    val status: String? = null,
+    val nominee: String? = null,
+    val relation: String? = null,
+    val neft: String? = null,
+    val nextPremium: String? = null,
+    val fupStatus: String? = null
+)
+
 // ---------- Families ----------
 
 data class FamilyListItem(
@@ -137,6 +175,17 @@ data class CreateFamilyRequest(
 )
 
 data class CreateFamilyResponse(val message: String, val familyCode: String)
+
+data class UpdateFamilyRequest(
+    val familyCode: String? = null,
+    val headName: String? = null,
+    val address: String? = null,
+    val mobile: String? = null,
+    val email: String? = null,
+    val pincode: String? = null,
+    val religion: String? = null,
+    val designation: String? = null
+)
 
 data class FamilyDetail(
     val id: Int?,
@@ -225,7 +274,7 @@ data class ClientsResponse(val data: List<Client>, val total: Int, val page: Int
 
 data class CreateClientRequest(
     val familyCode: String,
-    val persCode: String? = null,
+    val persCode: String,
     val name: String,
     val dob: String? = null,
     val sex: String? = null,
@@ -235,6 +284,31 @@ data class CreateClientRequest(
     val clientType: String? = null,
     val address: String? = null
 )
+
+data class UpdateClientRequest(
+    val familyCode: String? = null,
+    val persCode: String? = null,
+    val name: String? = null,
+    val dob: String? = null,
+    val sex: String? = null,
+    val mobile: String? = null,
+    val email: String? = null,
+    val occupation: String? = null,
+    val clientType: String? = null,
+    val address: String? = null
+)
+
+// ---------- Plans ----------
+
+data class Plan(
+    val planNo: String,
+    val planName: String?,
+    val sbSchedule: List<Double>?,
+    val lapsDays: Int?,
+    val gstRates: List<Double>?
+)
+
+data class PlansResponse(val data: List<Plan>)
 
 // ---------- FUP ----------
 
@@ -260,6 +334,16 @@ data class FUPUpdateRequest(
     val reason: String? = null
 )
 
+data class FUPHistoryResponse(val data: List<FUPHistory>)
+
+data class FUPMultipleDueItem(
+    val instalmentNo: Int?,
+    val dueDate: String?,
+    val amount: Double?
+)
+
+data class FUPMultipleDueResponse(val data: List<FUPMultipleDueItem>)
+
 // ---------- Commission ----------
 
 data class Commission(
@@ -282,6 +366,16 @@ data class CommissionMonthSummary(val month: String, val totalCommission: Double
 data class CommissionYearlySummary(val year: Int, val firstYear: Double, val renewal: Double, val bonus: Double, val gross: Double)
 
 data class CommissionSummaryResponse(val currentMonth: CommissionMonthSummary, val yearly: List<CommissionYearlySummary>)
+
+data class CommissionCalculation(
+    val policyNo: Int?,
+    val year: Int?,
+    val baseCommissionPct: Double?,
+    val bonusCommissionPct: Double?,
+    val totalPct: Double?,
+    val estimatedCommission: Double?,
+    val note: String?
+)
 
 data class CreateCommissionRequest(
     val policyNo: Int,
@@ -343,7 +437,7 @@ data class LeadsResponse(val data: List<Lead>)
 
 data class CreateLeadRequest(
     val name: String,
-    val mobile: String? = null,
+    val mobile: String,
     val address: String? = null,
     val searchTerm: String? = null
 )
@@ -362,10 +456,15 @@ data class Activity(
 data class ActivitiesResponse(val data: List<Activity>)
 
 data class CreateActivityRequest(
+    val clientId: Int,
     val policyNo: Int? = null,
     val activityType: String,
+    val activityDate: String,
+    val activityTime: String? = null,
     val details: String? = null,
-    val activityDate: String
+    val reminderDate: String? = null,
+    val reminderTime: String? = null,
+    val status: String? = null
 )
 
 data class UpdateActivityRequest(val status: String)
@@ -390,3 +489,29 @@ data class GSTCalculation(
 data class CashInOutItem(val month: String, val income: Double, val expense: Double, val net: Double)
 
 data class CashInOutResponse(val data: List<CashInOutItem>)
+
+data class CashflowItem(
+    val policyNo: Int?,
+    val date: String?,
+    val type: String?,
+    val amount: Double?
+)
+
+data class CashflowReportResponse(val data: List<CashflowItem>)
+
+data class StatusReportItem(
+    val policyNo: Int?,
+    val status: String?,
+    val fupStatus: String?
+)
+
+data class StatusReportResponse(val data: List<StatusReportItem>)
+
+data class CalendarReportItem(
+    val policyNo: Int?,
+    val months: List<String>?
+)
+
+data class CalendarReportResponse(val data: List<CalendarReportItem>)
+
+data class RefreshReportsRequest(val familyCode: String)

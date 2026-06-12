@@ -195,6 +195,7 @@ private fun CreateClientDialog(
     onSubmit: (CreateClientRequest) -> Unit
 ) {
     var familyCode by remember { mutableStateOf("") }
+    var persCode by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var mobile by remember { mutableStateOf("") }
     var dob by remember { mutableStateOf("") }
@@ -212,6 +213,15 @@ private fun CreateClientDialog(
                     onValueChange = { familyCode = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Family Code *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = persCode,
+                    onValueChange = { persCode = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Person Code *") },
                     singleLine = true,
                     enabled = !isLoading
                 )
@@ -267,6 +277,7 @@ private fun CreateClientDialog(
                     onSubmit(
                         CreateClientRequest(
                             familyCode = familyCode.trim(),
+                            persCode = persCode.trim(),
                             name = name.trim(),
                             mobile = mobile.trim().takeIf { it.isNotBlank() },
                             dob = dob.trim().takeIf { it.isNotBlank() },
@@ -274,7 +285,7 @@ private fun CreateClientDialog(
                         )
                     )
                 },
-                enabled = familyCode.isNotBlank() && name.isNotBlank() && !isLoading
+                enabled = familyCode.isNotBlank() && persCode.isNotBlank() && name.isNotBlank() && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

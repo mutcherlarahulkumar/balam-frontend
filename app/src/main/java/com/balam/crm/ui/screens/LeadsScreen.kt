@@ -208,7 +208,7 @@ private fun LeadDialog(
                     value = mobile,
                     onValueChange = { mobile = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Mobile") },
+                    label = { Text("Mobile *") },
                     singleLine = true,
                     enabled = !isLoading
                 )
@@ -245,13 +245,13 @@ private fun LeadDialog(
                     onSubmit(
                         CreateLeadRequest(
                             name = name.trim(),
-                            mobile = mobile.trim().takeIf { it.isNotBlank() },
+                            mobile = mobile.trim(),
                             address = address.trim().takeIf { it.isNotBlank() },
                             searchTerm = searchTerm.trim().takeIf { it.isNotBlank() }
                         )
                     )
                 },
-                enabled = name.isNotBlank() && !isLoading
+                enabled = name.isNotBlank() && mobile.trim().isNotBlank() && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

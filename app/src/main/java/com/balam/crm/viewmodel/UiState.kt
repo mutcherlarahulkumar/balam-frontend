@@ -18,8 +18,15 @@ fun Throwable.friendlyMessage(): String = when (this) {
             val body = response()?.errorBody()?.string()
             if (body != null) {
                 val json = Gson().fromJson(body, JsonObject::class.java)
-                val msg = json?.get("message")?.asString ?: json?.get("error")?.asString
-                if (!msg.isNullOrBlank()) msg else "Something went wrong"
+                if (json?.get("error")?.asString == "validation_error" && json.has("errors")) {
+                    val errors = json.getAsJsonArray("errors")
+                    errors.mapNotNull { it.asJsonObject?.get("message")?.asString }
+                        .joinToString("\n")
+                        .ifBlank { "Validation failed" }
+                } else {
+                    val msg = json?.get("message")?.asString ?: json?.get("error")?.asString
+                    if (!msg.isNullOrBlank()) msg else "Something went wrong"
+                }
             } else {
                 "Something went wrong"
             }

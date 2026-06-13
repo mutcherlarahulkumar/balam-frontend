@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -27,10 +29,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -51,6 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.CreatePolicyRequest
+import com.balam.crm.data.model.Plan
 import com.balam.crm.data.model.PolicyListItem
 import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
@@ -78,9 +86,14 @@ fun PoliciesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val createState by viewModel.createState.collectAsStateWithLifecycle()
+    val plans by viewModel.plans.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var status by rememberSaveable { mutableStateOf<String?>(null) }
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPlans()
+    }
 
     LaunchedEffect(query, status) {
         if (query.isNotEmpty()) delay(400)
@@ -98,6 +111,7 @@ fun PoliciesScreen(
     if (showCreateDialog) {
         CreatePolicyDialog(
             createState = createState,
+            plans = plans,
             onDismiss = {
                 showCreateDialog = false
                 viewModel.resetCreateState()
@@ -226,9 +240,87 @@ internal fun PolicyCard(policy: PolicyListItem, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Plan picker. Uses an ExposedDropdownMenuBox with a free-text search filter when [plans]
+ * is non-empty; otherwise falls back to a plain editable text field so a planNo can still
+ * be entered manually (offline / load failure).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PlanPickerField(
+    planNo: String,
+    onPlanNoChange: (String) -> Unit,
+    plans: List<Plan>,
+    enabled: Boolean
+) {
+    if (plans.isEmpty()) {
+        OutlinedTextField(
+            value = planNo,
+            onValueChange = onPlanNoChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Plan No *") },
+            singleLine = true,
+            enabled = enabled
+        )
+        return
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+    val filtered = remember(planNo, plans) {
+        if (planNo.isBlank()) plans
+        else plans.filter {
+            it.planNo.contains(planNo, ignoreCase = true) ||
+                (it.planName?.contains(planNo, ignoreCase = true) == true)
+        }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = it }
+    ) {
+        OutlinedTextField(
+            value = planNo,
+            onValueChange = {
+                onPlanNoChange(it)
+                expanded = true
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryEditable),
+            label = { Text("Plan No *") },
+            placeholder = { Text("Search plan no or name") },
+            singleLine = true,
+            enabled = enabled,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = 280.dp)
+        ) {
+            filtered.forEach { plan ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            listOfNotNull(plan.planNo, plan.planName)
+                                .joinToString(" — ")
+                        )
+                    },
+                    onClick = {
+                        onPlanNoChange(plan.planNo)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreatePolicyDialog(
     createState: UiState<*>?,
+    plans: List<Plan>,
     onDismiss: () -> Unit,
     onSubmit: (CreatePolicyRequest) -> Unit
 ) {
@@ -273,7 +365,7 @@ private fun CreatePolicyDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text("New Policy") },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                 OutlinedTextField(
                     value = policyNo,
                     onValueChange = { policyNo = it },
@@ -302,12 +394,10 @@ private fun CreatePolicyDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = planNo,
-                    onValueChange = { planNo = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Plan No *") },
-                    singleLine = true,
+                PlanPickerField(
+                    planNo = planNo,
+                    onPlanNoChange = { planNo = it },
+                    plans = plans,
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

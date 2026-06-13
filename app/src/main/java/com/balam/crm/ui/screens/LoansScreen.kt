@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -194,7 +195,7 @@ private fun CreateLoanDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text("New Loan") },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                 OutlinedTextField(
                     value = policyNo,
                     onValueChange = { policyNo = it },

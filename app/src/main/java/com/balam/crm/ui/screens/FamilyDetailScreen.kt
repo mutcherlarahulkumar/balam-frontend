@@ -16,9 +16,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -45,6 +47,8 @@ fun FamilyDetailScreen(
     onBack: () -> Unit,
     onPolicyClick: (Int) -> Unit,
     onClientClick: (Int) -> Unit,
+    onAddPolicy: (familyCode: String) -> Unit,
+    onAddClient: () -> Unit,
     viewModel: FamilyDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,6 +86,25 @@ fun FamilyDetailScreen(
                             InfoRow("Pincode", family.pincode)
                             InfoRow("Designation", family.designation)
                             InfoRow("Last Update", formatDate(family.lastUpdate))
+                        }
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { onAddClient() },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Add Client")
+                            }
+                            Button(
+                                onClick = { onAddPolicy(family.familyCode) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Add Policy")
+                            }
                         }
                     }
                     item {

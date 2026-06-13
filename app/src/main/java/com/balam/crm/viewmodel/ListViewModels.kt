@@ -16,6 +16,7 @@ import com.balam.crm.data.model.FUPUpdateRequest
 import com.balam.crm.data.model.FamiliesResponse
 import com.balam.crm.data.model.FamilyDetail
 import com.balam.crm.data.model.MessageResponse
+import com.balam.crm.data.model.Plan
 import com.balam.crm.data.model.PoliciesResponse
 import com.balam.crm.data.model.PolicyDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,6 +34,19 @@ class PoliciesViewModel @Inject constructor(private val api: ApiService) : ViewM
 
     private val _createState = MutableStateFlow<UiState<MessageResponse>?>(null)
     val createState: StateFlow<UiState<MessageResponse>?> = _createState.asStateFlow()
+
+    private val _plans = MutableStateFlow<List<Plan>>(emptyList())
+    val plans: StateFlow<List<Plan>> = _plans.asStateFlow()
+
+    fun loadPlans() {
+        viewModelScope.launch {
+            try {
+                _plans.value = api.getPlans().data
+            } catch (e: Exception) {
+                // keep empty; picker falls back to text
+            }
+        }
+    }
 
     fun load(search: String? = null, status: String? = null) {
         viewModelScope.launch {

@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,6 +35,7 @@ fun ClientDetailScreen(
     clientId: Int,
     onBack: () -> Unit,
     onPolicyClick: (Int) -> Unit,
+    onAddPolicy: (familyCode: String, persCode: String) -> Unit,
     viewModel: ClientDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -103,6 +106,16 @@ fun ClientDetailScreen(
                             text = "Policies (${client.policies.size})",
                             style = MaterialTheme.typography.titleMedium
                         )
+                    }
+                    item {
+                        Button(
+                            onClick = {
+                                onAddPolicy(client.familyCode, client.persCode ?: "")
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Add Policy")
+                        }
                     }
                     if (client.policies.isEmpty()) {
                         item {

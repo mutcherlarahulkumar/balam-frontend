@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.balam.crm.data.api.TokenStore
@@ -29,6 +31,7 @@ import com.balam.crm.ui.screens.ActivitiesScreen
 import com.balam.crm.ui.screens.ClientDetailScreen
 import com.balam.crm.ui.screens.ClientsScreen
 import com.balam.crm.ui.screens.CommissionScreen
+import com.balam.crm.ui.screens.CreatePolicyScreen
 import com.balam.crm.ui.screens.DashboardScreen
 import com.balam.crm.ui.screens.FUPScreen
 import com.balam.crm.ui.screens.FamiliesScreen
@@ -62,10 +65,13 @@ object Routes {
     const val GST = "gst"
     const val REPORTS = "reports"
     const val PROFILE = "profile"
+    const val POLICY_NEW = "policy/new"
 
     fun policyDetail(policyNo: Int) = "policy/$policyNo"
     fun familyDetail(familyCode: String) = "family/$familyCode"
     fun clientDetail(id: Int) = "client/$id"
+    fun createPolicy(familyCode: String, persCode: String) =
+        "policy/new?familyCode=$familyCode&persCode=$persCode"
 }
 
 private data class BottomTab(val route: String, val label: String, val icon: ImageVector)
@@ -146,9 +152,29 @@ fun AppNavigation(tokenStore: TokenStore) {
             composable(Routes.POLICIES) {
                 PoliciesScreen(onPolicyClick = { navController.navigate(Routes.policyDetail(it)) })
             }
+            composable(
+                route = "policy/new?familyCode={familyCode}&persCode={persCode}",
+                arguments = listOf(
+                    navArgument("familyCode") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("persCode") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { entry ->
+                val familyCode = entry.arguments?.getString("familyCode") ?: ""
+                val persCode = entry.arguments?.getString("persCode") ?: ""
+                CreatePolicyScreen(
+                    prefillFamilyCode = familyCode,
+                    prefillPersCode = persCode,
+                    onBack = { navController.popBackStack() },
+                    onCreated = { navController.popBackStack() }
+                )
+            }
             composable("policy/{policyNo}") { entry ->
                 val policyNo = entry.arguments?.getString("policyNo")?.toIntOrNull() ?: 0
-                PolicyDetailScreen(policyNo = policyNo, onBack = { navController.popBackStack() })
+                PolicyDetailScreen(
+                    policyNo = policyNo,
+                    onBack = { navController.popBackStack() },
+                    onViewFamily = { navController.navigate(Routes.familyDetail(it)) }
+                )
             }
             composable(Routes.FUP) {
                 FUPScreen(onPolicyClick = { navController.navigate(Routes.policyDetail(it)) })
@@ -162,13 +188,16 @@ fun AppNavigation(tokenStore: TokenStore) {
                     familyCode = familyCode,
                     onBack = { navController.popBackStack() },
                     onPolicyClick = { navController.navigate(Routes.policyDetail(it)) },
-                    onClientClick = { navController.navigate(Routes.clientDetail(it)) }
+                    onClientClick = { navController.navigate(Routes.clientDetail(it)) },
+                    onAddPolicy = { fc -> navController.navigate(Routes.createPolicy(fc, "")) },
+                    onAddClient = { navController.navigate(Routes.CLIENTS) }
                 )
             }
             composable(Routes.CLIENTS) {
                 ClientsScreen(
                     onBack = { navController.popBackStack() },
-                    onClientClick = { navController.navigate(Routes.clientDetail(it)) }
+                    onClientClick = { navController.navigate(Routes.clientDetail(it)) },
+                    onAddPolicy = { fc, pc -> navController.navigate(Routes.createPolicy(fc, pc)) }
                 )
             }
             composable("client/{id}") { entry ->
@@ -176,7 +205,8 @@ fun AppNavigation(tokenStore: TokenStore) {
                 ClientDetailScreen(
                     clientId = id,
                     onBack = { navController.popBackStack() },
-                    onPolicyClick = { navController.navigate(Routes.policyDetail(it)) }
+                    onPolicyClick = { navController.navigate(Routes.policyDetail(it)) },
+                    onAddPolicy = { fc, pc -> navController.navigate(Routes.createPolicy(fc, pc)) }
                 )
             }
             composable(Routes.COMMISSION) {

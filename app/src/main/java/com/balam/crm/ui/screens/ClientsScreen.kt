@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,12 +60,14 @@ import kotlinx.coroutines.delay
 fun ClientsScreen(
     onBack: () -> Unit,
     onClientClick: (Int) -> Unit,
+    onAddPolicy: (familyCode: String, persCode: String) -> Unit,
     viewModel: ClientsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val createState by viewModel.createState.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var createdClient by remember { mutableStateOf<Client?>(null) }
 
     LaunchedEffect(query) {
         if (query.isNotEmpty()) delay(400)
@@ -72,11 +75,34 @@ fun ClientsScreen(
     }
 
     LaunchedEffect(createState) {
-        if (createState is UiState.Success) {
+        val s = createState
+        if (s is UiState.Success) {
             showCreateDialog = false
+            createdClient = s.data
             viewModel.resetCreateState()
             viewModel.load(search = query)
         }
+    }
+
+    createdClient?.let { client ->
+        AlertDialog(
+            onDismissRequest = { createdClient = null },
+            title = { Text("Client created") },
+            text = { Text("Add a policy for ${client.name} now?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    createdClient = null
+                    onAddPolicy(client.familyCode, client.persCode ?: "")
+                }) {
+                    Text("Add Policy")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { createdClient = null }) {
+                    Text("Later")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -207,7 +233,7 @@ private fun CreateClientDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text("New Client") },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                 OutlinedTextField(
                     value = familyCode,
                     onValueChange = { familyCode = it },

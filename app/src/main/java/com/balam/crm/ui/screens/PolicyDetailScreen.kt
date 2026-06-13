@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,6 +52,7 @@ import com.balam.crm.viewmodel.UiState
 fun PolicyDetailScreen(
     policyNo: Int,
     onBack: () -> Unit,
+    onViewFamily: (String) -> Unit,
     viewModel: PolicyDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -148,6 +150,13 @@ fun PolicyDetailScreen(
                             InfoRow("Nominee", policy.nominee)
                             InfoRow("Relation", policy.relation)
                             InfoRow("NEFT", policy.neft)
+                            Spacer(Modifier.height(4.dp))
+                            TextButton(
+                                onClick = { onViewFamily(policy.familyCode) },
+                                enabled = policy.familyCode.isNotBlank()
+                            ) {
+                                Text("View Family")
+                            }
                         }
                     }
                     item {
@@ -223,7 +232,7 @@ private fun EditPolicyDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text("Edit Policy ${policy.policyNo}") },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                 OutlinedTextField(
                     value = status,
                     onValueChange = { status = it },

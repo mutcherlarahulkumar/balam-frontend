@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -68,10 +70,18 @@ object Routes {
 
 private data class BottomTab(val route: String, val label: String, val icon: ImageVector)
 
+fun NavController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
 private val bottomTabs = listOf(
     BottomTab(Routes.DASHBOARD, "Dashboard", Icons.Filled.Home),
     BottomTab(Routes.POLICIES, "Policies", Icons.Filled.Description),
-    BottomTab(Routes.FUP, "FUP", Icons.Filled.DateRange),
+    BottomTab(Routes.FUP, "Due List", Icons.Filled.DateRange),
     BottomTab(Routes.FAMILIES, "Families", Icons.Filled.Groups),
     BottomTab(Routes.MORE, "More", Icons.Filled.MoreHoriz)
 )
@@ -85,6 +95,7 @@ fun AppNavigation(tokenStore: TokenStore) {
     val showBottomBar = currentRoute in bottomTabs.map { it.route }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -92,13 +103,7 @@ fun AppNavigation(tokenStore: TokenStore) {
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
                             onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                navController.navigateToTab(tab.route)
                             },
                             icon = { Icon(tab.icon, contentDescription = tab.label) },
                             label = { Text(tab.label) }
@@ -129,7 +134,13 @@ fun AppNavigation(tokenStore: TokenStore) {
             composable(Routes.DASHBOARD) {
                 DashboardScreen(
                     onPolicyClick = { navController.navigate(Routes.policyDetail(it)) },
-                    onNavigate = { navController.navigate(it) }
+                    onNavigate = { route ->
+                        if (route in bottomTabs.map { it.route }) {
+                            navController.navigateToTab(route)
+                        } else {
+                            navController.navigate(route)
+                        }
+                    }
                 )
             }
             composable(Routes.POLICIES) {
@@ -194,7 +205,13 @@ fun AppNavigation(tokenStore: TokenStore) {
             }
             composable(Routes.MORE) {
                 MoreScreen(
-                    onNavigate = { navController.navigate(it) },
+                    onNavigate = { route ->
+                        if (route in bottomTabs.map { it.route }) {
+                            navController.navigateToTab(route)
+                        } else {
+                            navController.navigate(route)
+                        }
+                    },
                     onLogout = {
                         navController.navigate(Routes.LOGIN) {
                             popUpTo(0) { inclusive = true }

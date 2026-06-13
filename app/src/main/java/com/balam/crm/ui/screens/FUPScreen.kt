@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,6 +46,7 @@ import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.LoadingState
 import com.balam.crm.ui.components.formatINR
+import com.balam.crm.ui.components.ShareButtons
 import com.balam.crm.ui.theme.DangerRed
 import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.FUPViewModel
@@ -67,15 +69,15 @@ fun FUPScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 16.dp)) {
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Follow-up Premiums",
+            text = "Premium Due List",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Premiums due and overdue",
+            text = "Premiums due and overdue, ready to share with clients",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -185,6 +187,20 @@ private fun FupCard(fup: FUPDueItem, onClick: () -> Unit, onUpdate: () -> Unit) 
                 TextButton(onClick = onUpdate) {
                     Text("Update FUP")
                 }
+            }
+            if (!fup.mobile.isNullOrBlank()) {
+                Spacer(Modifier.height(8.dp))
+                val message = buildString {
+                    append("Dear ${fup.clientName},\n\n")
+                    append("Your premium payment is due:\n")
+                    append("Policy No: ${fup.policyNo}\n")
+                    append("Plan: ${fup.planName ?: "—"}\n")
+                    append("Premium Amount: ${formatINR(fup.premium)}\n")
+                    append("Due Date: ${formatDate(fup.nextPremium)}\n\n")
+                    append("Please make the payment at your earliest convenience to keep your policy active.\n\n")
+                    append("Regards")
+                }
+                ShareButtons(mobile = fup.mobile, message = message)
             }
         }
     }

@@ -222,12 +222,10 @@ private fun MarkPaidDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = paidDate,
                     onValueChange = { paidDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Paid Date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Paid Date *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

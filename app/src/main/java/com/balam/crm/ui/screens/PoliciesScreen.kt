@@ -311,21 +311,17 @@ private fun CreatePolicyDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = issueDate,
                     onValueChange = { issueDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Issue Date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Issue Date *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = matDate,
                     onValueChange = { matDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Maturity Date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Maturity Date *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
@@ -379,12 +375,10 @@ private fun CreatePolicyDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = nextPremium,
                     onValueChange = { nextPremium = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Next Premium (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Next Premium *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

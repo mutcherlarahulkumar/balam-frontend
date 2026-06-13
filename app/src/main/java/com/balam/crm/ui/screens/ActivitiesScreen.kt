@@ -245,12 +245,10 @@ private fun CreateActivityDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = activityDate,
                     onValueChange = { activityDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Date *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

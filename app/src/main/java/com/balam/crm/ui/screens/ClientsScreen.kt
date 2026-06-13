@@ -244,12 +244,10 @@ private fun CreateClientDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = dob,
                     onValueChange = { dob = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("DOB (YYYY-MM-DD)") },
-                    singleLine = true,
+                    label = "Date of Birth",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

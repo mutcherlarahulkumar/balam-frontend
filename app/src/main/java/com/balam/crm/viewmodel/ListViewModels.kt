@@ -112,11 +112,11 @@ class FUPViewModel @Inject constructor(private val api: ApiService) : ViewModel(
         load()
     }
 
-    fun load() {
+    fun load(year: Int? = null, month: Int? = null, overdueDays: Int? = null) {
         viewModelScope.launch {
             _state.value = UiState.Loading
             try {
-                _state.value = UiState.Success(api.getFupDue())
+                _state.value = UiState.Success(api.getFupDue(year, month, overdueDays))
             } catch (e: Exception) {
                 _state.value = UiState.Error(e.friendlyMessage())
             }

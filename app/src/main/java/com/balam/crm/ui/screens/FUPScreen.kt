@@ -1,7 +1,9 @@
 package com.balam.crm.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,7 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
@@ -23,6 +27,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,10 +40,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +62,12 @@ import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.FUPViewModel
 import com.balam.crm.viewmodel.UiState
 
+private val monthNames = listOf(
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FUPScreen(
     onPolicyClick: (Int) -> Unit,
@@ -61,11 +77,24 @@ fun FUPScreen(
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     var dialogItem by remember { mutableStateOf<FUPDueItem?>(null) }
 
+    var selectedMonth by rememberSaveable { mutableStateOf<Int?>(null) }
+    var yearText by rememberSaveable { mutableStateOf("") }
+    var overdueOnly by rememberSaveable { mutableStateOf(false) }
+    var monthMenuExpanded by remember { mutableStateOf(false) }
+
+    fun reload() {
+        viewModel.load(
+            year = yearText.trim().toIntOrNull(),
+            month = selectedMonth,
+            overdueDays = if (overdueOnly) 1 else null
+        )
+    }
+
     LaunchedEffect(updateState) {
         if (updateState is UiState.Success) {
             dialogItem = null
             viewModel.resetUpdateState()
-            viewModel.load()
+            reload()
         }
     }
 
@@ -83,9 +112,71 @@ fun FUPScreen(
         )
         Spacer(Modifier.height(8.dp))
 
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box {
+                FilterChip(
+                    selected = selectedMonth != null,
+                    onClick = { monthMenuExpanded = true },
+                    label = { Text(selectedMonth?.let { monthNames[it - 1] } ?: "Month: All") }
+                )
+                DropdownMenu(expanded = monthMenuExpanded, onDismissRequest = { monthMenuExpanded = false }) {
+                    DropdownMenuItem(text = { Text("All") }, onClick = {
+                        selectedMonth = null
+                        monthMenuExpanded = false
+                        reload()
+                    })
+                    monthNames.forEachIndexed { index, name ->
+                        DropdownMenuItem(text = { Text(name) }, onClick = {
+                            selectedMonth = index + 1
+                            monthMenuExpanded = false
+                            reload()
+                        })
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = yearText,
+                onValueChange = {
+                    if (it.length <= 4 && it.all { c -> c.isDigit() }) {
+                        yearText = it
+                        if (it.length == 4 || it.isEmpty()) reload()
+                    }
+                },
+                modifier = Modifier.width(110.dp),
+                label = { Text("Year") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            FilterChip(
+                selected = overdueOnly,
+                onClick = {
+                    overdueOnly = !overdueOnly
+                    reload()
+                },
+                label = { Text("Overdue 1+ days") }
+            )
+            if (selectedMonth != null || yearText.isNotBlank() || overdueOnly) {
+                FilterChip(
+                    selected = false,
+                    onClick = {
+                        selectedMonth = null
+                        yearText = ""
+                        overdueOnly = false
+                        reload()
+                    },
+                    label = { Text("Clear filters") }
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+
         when (val s = state) {
             is UiState.Loading -> LoadingState()
-            is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load() })
+            is UiState.Error -> ErrorState(message = s.message, onRetry = { reload() })
             is UiState.Success -> {
                 val items = s.data.data
                 if (items.isEmpty()) {
@@ -229,12 +320,10 @@ private fun UpdateFupDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = newFup,
                     onValueChange = { newFup = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("New FUP date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "New FUP date *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

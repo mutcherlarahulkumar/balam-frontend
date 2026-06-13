@@ -215,21 +215,17 @@ private fun CreateLoanDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = loanDate,
                     onValueChange = { loanDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Loan Date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Loan Date *",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = interestDueDate,
                     onValueChange = { interestDueDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Interest Due Date (YYYY-MM-DD) *") },
-                    singleLine = true,
+                    label = "Interest Due Date *",
                     enabled = !isLoading
                 )
                 if (errorMessage != null) {

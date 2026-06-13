@@ -261,12 +261,10 @@ private fun EditPolicyDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.DateField(
                     value = nextPremium,
                     onValueChange = { nextPremium = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Next Premium (YYYY-MM-DD)") },
-                    singleLine = true,
+                    label = "Next Premium",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

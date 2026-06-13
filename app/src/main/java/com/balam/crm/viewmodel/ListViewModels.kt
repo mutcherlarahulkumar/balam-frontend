@@ -9,6 +9,8 @@ import com.balam.crm.data.model.ClientsResponse
 import com.balam.crm.data.model.CreateClientRequest
 import com.balam.crm.data.model.CreateFamilyRequest
 import com.balam.crm.data.model.CreateFamilyResponse
+import com.balam.crm.data.model.CreatePolicyRequest
+import com.balam.crm.data.model.UpdatePolicyRequest
 import com.balam.crm.data.model.FUPResponse
 import com.balam.crm.data.model.FUPUpdateRequest
 import com.balam.crm.data.model.FamiliesResponse
@@ -29,6 +31,9 @@ class PoliciesViewModel @Inject constructor(private val api: ApiService) : ViewM
     private val _state = MutableStateFlow<UiState<PoliciesResponse>>(UiState.Loading)
     val state: StateFlow<UiState<PoliciesResponse>> = _state.asStateFlow()
 
+    private val _createState = MutableStateFlow<UiState<MessageResponse>?>(null)
+    val createState: StateFlow<UiState<MessageResponse>?> = _createState.asStateFlow()
+
     fun load(search: String? = null, status: String? = null) {
         viewModelScope.launch {
             _state.value = UiState.Loading
@@ -41,6 +46,21 @@ class PoliciesViewModel @Inject constructor(private val api: ApiService) : ViewM
             }
         }
     }
+
+    fun createPolicy(request: CreatePolicyRequest) {
+        viewModelScope.launch {
+            _createState.value = UiState.Loading
+            try {
+                _createState.value = UiState.Success(api.createPolicy(request))
+            } catch (e: Exception) {
+                _createState.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    fun resetCreateState() {
+        _createState.value = null
+    }
 }
 
 @HiltViewModel
@@ -48,6 +68,9 @@ class PolicyDetailViewModel @Inject constructor(private val api: ApiService) : V
 
     private val _state = MutableStateFlow<UiState<PolicyDetail>>(UiState.Loading)
     val state: StateFlow<UiState<PolicyDetail>> = _state.asStateFlow()
+
+    private val _updateState = MutableStateFlow<UiState<MessageResponse>?>(null)
+    val updateState: StateFlow<UiState<MessageResponse>?> = _updateState.asStateFlow()
 
     fun load(policyNo: Int) {
         viewModelScope.launch {
@@ -58,6 +81,21 @@ class PolicyDetailViewModel @Inject constructor(private val api: ApiService) : V
                 _state.value = UiState.Error(e.friendlyMessage())
             }
         }
+    }
+
+    fun updatePolicy(policyNo: Int, request: UpdatePolicyRequest) {
+        viewModelScope.launch {
+            _updateState.value = UiState.Loading
+            try {
+                _updateState.value = UiState.Success(api.updatePolicy(policyNo, request))
+            } catch (e: Exception) {
+                _updateState.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    fun resetUpdateState() {
+        _updateState.value = null
     }
 }
 

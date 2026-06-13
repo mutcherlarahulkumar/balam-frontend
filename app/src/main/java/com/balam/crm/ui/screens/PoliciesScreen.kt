@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -16,26 +17,40 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balam.crm.data.model.CreatePolicyRequest
 import com.balam.crm.data.model.PolicyListItem
 import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
@@ -62,15 +77,50 @@ fun PoliciesScreen(
     viewModel: PoliciesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val createState by viewModel.createState.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var status by rememberSaveable { mutableStateOf<String?>(null) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(query, status) {
         if (query.isNotEmpty()) delay(400)
         viewModel.load(search = query, status = status)
     }
 
-    Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 16.dp)) {
+    LaunchedEffect(createState) {
+        if (createState is UiState.Success) {
+            showCreateDialog = false
+            viewModel.resetCreateState()
+            viewModel.load(search = query, status = status)
+        }
+    }
+
+    if (showCreateDialog) {
+        CreatePolicyDialog(
+            createState = createState,
+            onDismiss = {
+                showCreateDialog = false
+                viewModel.resetCreateState()
+            },
+            onSubmit = { viewModel.createPolicy(it) }
+        )
+    }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreateDialog = true }) {
+                Icon(Icons.Filled.Add, contentDescription = "Add policy")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(padding)
+            .padding(horizontal = 16.dp)
+    ) {
         Spacer(Modifier.height(16.dp))
         Text(
             text = "Policies",
@@ -118,6 +168,7 @@ fun PoliciesScreen(
                 }
             }
         }
+    }
     }
 }
 
@@ -173,4 +224,274 @@ internal fun PolicyCard(policy: PolicyListItem, onClick: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun CreatePolicyDialog(
+    createState: UiState<*>?,
+    onDismiss: () -> Unit,
+    onSubmit: (CreatePolicyRequest) -> Unit
+) {
+    var policyNo by remember { mutableStateOf("") }
+    var familyCode by remember { mutableStateOf("") }
+    var persCode by remember { mutableStateOf("") }
+    var planNo by remember { mutableStateOf("") }
+    var issueDate by remember { mutableStateOf("") }
+    var matDate by remember { mutableStateOf("") }
+    var term by remember { mutableStateOf("") }
+    var ppt by remember { mutableStateOf("") }
+    var sumAssured by remember { mutableStateOf("") }
+    var premium by remember { mutableStateOf("") }
+    var paymentMode by remember { mutableStateOf("") }
+    var nextPremium by remember { mutableStateOf("") }
+    var nominee by remember { mutableStateOf("") }
+    var relation by remember { mutableStateOf("") }
+    var branch by remember { mutableStateOf("") }
+    var neft by remember { mutableStateOf("") }
+    var dab by remember { mutableStateOf("") }
+    var termRider by remember { mutableStateOf("") }
+
+    val isLoading = createState is UiState.Loading
+    val errorMessage = (createState as? UiState.Error)?.message
+
+    val isValid = policyNo.toIntOrNull() != null &&
+        familyCode.isNotBlank() &&
+        persCode.isNotBlank() &&
+        planNo.isNotBlank() &&
+        issueDate.isNotBlank() &&
+        matDate.isNotBlank() &&
+        term.toIntOrNull() != null &&
+        ppt.toIntOrNull() != null &&
+        sumAssured.toDoubleOrNull() != null &&
+        premium.toDoubleOrNull() != null &&
+        paymentMode.isNotBlank() &&
+        nextPremium.isNotBlank() &&
+        nominee.isNotBlank() &&
+        relation.isNotBlank()
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("New Policy") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = policyNo,
+                    onValueChange = { policyNo = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Policy No *") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = familyCode,
+                    onValueChange = { familyCode = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Family Code *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = persCode,
+                    onValueChange = { persCode = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Person Code *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = planNo,
+                    onValueChange = { planNo = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Plan No *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = issueDate,
+                    onValueChange = { issueDate = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Issue Date (YYYY-MM-DD) *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = matDate,
+                    onValueChange = { matDate = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Maturity Date (YYYY-MM-DD) *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = term,
+                    onValueChange = { term = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Term *") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = ppt,
+                    onValueChange = { ppt = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("PPT *") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = sumAssured,
+                    onValueChange = { sumAssured = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Sum Assured *") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = premium,
+                    onValueChange = { premium = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Premium *") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = paymentMode,
+                    onValueChange = { paymentMode = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Payment Mode *") },
+                    placeholder = { Text("Y/H/Q/M/S") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = nextPremium,
+                    onValueChange = { nextPremium = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Next Premium (YYYY-MM-DD) *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = nominee,
+                    onValueChange = { nominee = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Nominee *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = relation,
+                    onValueChange = { relation = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Relation *") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = branch,
+                    onValueChange = { branch = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Branch") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = neft,
+                    onValueChange = { neft = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("NEFT") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = dab,
+                    onValueChange = { dab = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("DAB") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = termRider,
+                    onValueChange = { termRider = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Term Rider") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = !isLoading
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSubmit(
+                        CreatePolicyRequest(
+                            policyNo = policyNo.trim().toInt(),
+                            familyCode = familyCode.trim(),
+                            persCode = persCode.trim(),
+                            planNo = planNo.trim(),
+                            issueDate = issueDate.trim(),
+                            matDate = matDate.trim(),
+                            term = term.trim().toInt(),
+                            ppt = ppt.trim().toInt(),
+                            sumAssured = sumAssured.trim().toDouble(),
+                            premium = premium.trim().toDouble(),
+                            paymentMode = paymentMode.trim(),
+                            nextPremium = nextPremium.trim(),
+                            nominee = nominee.trim(),
+                            relation = relation.trim(),
+                            branch = branch.trim().takeIf { it.isNotBlank() },
+                            neft = neft.trim().takeIf { it.isNotBlank() },
+                            dab = dab.trim().toIntOrNull(),
+                            termRider = termRider.trim().toIntOrNull()
+                        )
+                    )
+                },
+                enabled = isValid && !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Create")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
+    )
 }

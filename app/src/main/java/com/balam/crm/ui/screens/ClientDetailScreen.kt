@@ -7,21 +7,39 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balam.crm.data.model.ClientDetail
+import com.balam.crm.data.model.UpdateClientRequest
+import com.balam.crm.ui.components.DateField
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.InfoRow
 import com.balam.crm.ui.components.LoadingState
@@ -39,13 +57,48 @@ fun ClientDetailScreen(
     viewModel: ClientDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    var showEditDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(clientId) {
         viewModel.load(clientId)
     }
 
+    LaunchedEffect(updateState) {
+        if (updateState is UiState.Success) {
+            showEditDialog = false
+            viewModel.resetUpdateState()
+            viewModel.load(clientId)
+        }
+    }
+
+    if (showEditDialog) {
+        val current = (state as? UiState.Success)?.data
+        if (current != null) {
+            EditClientDialog(
+                client = current,
+                updateState = updateState,
+                onDismiss = {
+                    showEditDialog = false
+                    viewModel.resetUpdateState()
+                },
+                onSubmit = { viewModel.updateClient(clientId, it) }
+            )
+        }
+    }
+
     Scaffold(
-        topBar = { BackTopBar(title = "Client", onBack = onBack) },
+        topBar = {
+            BackTopBar(
+                title = "Client",
+                onBack = onBack,
+                actions = {
+                    IconButton(onClick = { showEditDialog = true }) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Edit client")
+                    }
+                }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         when (val s = state) {
@@ -165,4 +218,139 @@ fun ClientDetailScreen(
             }
         }
     }
+}
+
+@Composable
+private fun EditClientDialog(
+    client: ClientDetail,
+    updateState: UiState<*>?,
+    onDismiss: () -> Unit,
+    onSubmit: (UpdateClientRequest) -> Unit
+) {
+    var name by remember { mutableStateOf(client.name) }
+    var mobile by remember { mutableStateOf(client.mobile ?: "") }
+    var email by remember { mutableStateOf(client.email ?: "") }
+    var dob by remember { mutableStateOf(client.dob ?: "") }
+    var sex by remember { mutableStateOf(client.sex ?: "") }
+    var occupation by remember { mutableStateOf(client.occupation ?: "") }
+    var clientType by remember { mutableStateOf(client.clientType ?: "") }
+    var address by remember { mutableStateOf(client.address ?: "") }
+
+    val isLoading = updateState is UiState.Loading
+    val errorMessage = (updateState as? UiState.Error)?.message
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("Edit Client") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Name") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = mobile,
+                    onValueChange = { mobile = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Mobile") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Email") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                DateField(
+                    value = dob,
+                    onValueChange = { dob = it },
+                    label = "DOB",
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = sex,
+                    onValueChange = { sex = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Sex") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = occupation,
+                    onValueChange = { occupation = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Occupation") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = clientType,
+                    onValueChange = { clientType = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Client Type") },
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Address") },
+                    enabled = !isLoading
+                )
+                if (errorMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSubmit(
+                        UpdateClientRequest(
+                            name = name.trim().takeIf { it.isNotBlank() },
+                            dob = dob.trim().takeIf { it.isNotBlank() },
+                            sex = sex.trim().takeIf { it.isNotBlank() },
+                            mobile = mobile.trim().takeIf { it.isNotBlank() },
+                            email = email.trim().takeIf { it.isNotBlank() },
+                            occupation = occupation.trim().takeIf { it.isNotBlank() },
+                            clientType = clientType.trim().takeIf { it.isNotBlank() },
+                            address = address.trim().takeIf { it.isNotBlank() }
+                        )
+                    )
+                },
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Save")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        }
+    )
 }

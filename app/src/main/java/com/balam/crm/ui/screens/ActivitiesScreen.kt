@@ -148,7 +148,8 @@ fun ActivitiesScreen(
                 showCreateDialog = false
                 viewModel.resetActionState()
             },
-            onSubmit = { viewModel.create(it) }
+            onSubmit = { viewModel.create(it) },
+            searchClients = { q -> viewModel.searchClients(q) }
         )
     }
 }
@@ -212,9 +213,11 @@ private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
 private fun CreateActivityDialog(
     actionState: UiState<*>?,
     onDismiss: () -> Unit,
-    onSubmit: (CreateActivityRequest) -> Unit
+    onSubmit: (CreateActivityRequest) -> Unit,
+    searchClients: suspend (String) -> List<com.balam.crm.data.model.Client>
 ) {
     var clientId by remember { mutableStateOf("") }
+    var showClientPicker by remember { mutableStateOf(false) }
     var activityType by remember { mutableStateOf("") }
     var activityDate by remember { mutableStateOf("") }
     var details by remember { mutableStateOf("") }
@@ -227,15 +230,24 @@ private fun CreateActivityDialog(
         title = { Text("New Activity") },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
-                OutlinedTextField(
-                    value = clientId,
-                    onValueChange = { clientId = it },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Client ID *") },
-                    singleLine = true,
-                    enabled = !isLoading,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = clientId,
+                        onValueChange = { clientId = it },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Client ID *") },
+                        singleLine = true,
+                        enabled = !isLoading,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = { showClientPicker = true }, enabled = !isLoading) {
+                        Text("Search")
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = activityType,
@@ -309,4 +321,15 @@ private fun CreateActivityDialog(
             }
         }
     )
+
+    if (showClientPicker) {
+        com.balam.crm.ui.components.ClientPickerDialog(
+            onDismiss = { showClientPicker = false },
+            onSelected = { client ->
+                clientId = client.id.toString()
+                showClientPicker = false
+            },
+            searchClients = searchClients
+        )
+    }
 }

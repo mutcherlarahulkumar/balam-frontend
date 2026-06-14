@@ -11,6 +11,7 @@ import com.balam.crm.data.model.CreateFamilyRequest
 import com.balam.crm.data.model.CreateFamilyResponse
 import com.balam.crm.data.model.CreatePolicyRequest
 import com.balam.crm.data.model.UpdatePolicyRequest
+import com.balam.crm.data.model.FUPMultipleDueItem
 import com.balam.crm.data.model.FUPResponse
 import com.balam.crm.data.model.FUPUpdateRequest
 import com.balam.crm.data.model.FamiliesResponse
@@ -19,6 +20,8 @@ import com.balam.crm.data.model.MessageResponse
 import com.balam.crm.data.model.Plan
 import com.balam.crm.data.model.PoliciesResponse
 import com.balam.crm.data.model.PolicyDetail
+import com.balam.crm.data.model.UpdateClientRequest
+import com.balam.crm.data.model.UpdateFamilyRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -205,6 +208,9 @@ class FamilyDetailViewModel @Inject constructor(private val api: ApiService) : V
     private val _state = MutableStateFlow<UiState<FamilyDetail>>(UiState.Loading)
     val state: StateFlow<UiState<FamilyDetail>> = _state.asStateFlow()
 
+    private val _updateState = MutableStateFlow<UiState<MessageResponse>?>(null)
+    val updateState: StateFlow<UiState<MessageResponse>?> = _updateState.asStateFlow()
+
     fun load(familyCode: String) {
         viewModelScope.launch {
             _state.value = UiState.Loading
@@ -214,6 +220,21 @@ class FamilyDetailViewModel @Inject constructor(private val api: ApiService) : V
                 _state.value = UiState.Error(e.friendlyMessage())
             }
         }
+    }
+
+    fun updateFamily(familyCode: String, request: UpdateFamilyRequest) {
+        viewModelScope.launch {
+            _updateState.value = UiState.Loading
+            try {
+                _updateState.value = UiState.Success(api.updateFamily(familyCode, request))
+            } catch (e: Exception) {
+                _updateState.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    fun resetUpdateState() {
+        _updateState.value = null
     }
 }
 
@@ -261,6 +282,9 @@ class ClientDetailViewModel @Inject constructor(private val api: ApiService) : V
     private val _state = MutableStateFlow<UiState<ClientDetail>>(UiState.Loading)
     val state: StateFlow<UiState<ClientDetail>> = _state.asStateFlow()
 
+    private val _updateState = MutableStateFlow<UiState<Client>?>(null)
+    val updateState: StateFlow<UiState<Client>?> = _updateState.asStateFlow()
+
     fun load(id: Int) {
         viewModelScope.launch {
             _state.value = UiState.Loading
@@ -270,5 +294,20 @@ class ClientDetailViewModel @Inject constructor(private val api: ApiService) : V
                 _state.value = UiState.Error(e.friendlyMessage())
             }
         }
+    }
+
+    fun updateClient(id: Int, request: UpdateClientRequest) {
+        viewModelScope.launch {
+            _updateState.value = UiState.Loading
+            try {
+                _updateState.value = UiState.Success(api.updateClient(id, request))
+            } catch (e: Exception) {
+                _updateState.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    fun resetUpdateState() {
+        _updateState.value = null
     }
 }

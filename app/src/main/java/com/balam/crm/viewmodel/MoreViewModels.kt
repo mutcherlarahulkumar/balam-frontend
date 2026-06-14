@@ -11,6 +11,7 @@ import com.balam.crm.data.model.CashflowReportResponse
 import com.balam.crm.data.model.RefreshReportsRequest
 import com.balam.crm.data.model.StatusReportResponse
 import com.balam.crm.data.model.Commission
+import com.balam.crm.data.model.CommissionCalculation
 import com.balam.crm.data.model.CommissionResponse
 import com.balam.crm.data.model.CommissionSummaryResponse
 import com.balam.crm.data.model.CreateActivityRequest
@@ -86,6 +87,24 @@ class CommissionViewModel @Inject constructor(private val api: ApiService) : Vie
 
     fun resetCreateState() {
         _createState.value = null
+    }
+
+    private val _calcState = MutableStateFlow<UiState<CommissionCalculation>?>(null)
+    val calcState: StateFlow<UiState<CommissionCalculation>?> = _calcState.asStateFlow()
+
+    fun calculateCommission(policyNo: Int, year: Int) {
+        viewModelScope.launch {
+            _calcState.value = UiState.Loading
+            try {
+                _calcState.value = UiState.Success(api.calculateCommission(policyNo, year))
+            } catch (e: Exception) {
+                _calcState.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    fun resetCalcState() {
+        _calcState.value = null
     }
 }
 
@@ -269,6 +288,14 @@ class ActivitiesViewModel @Inject constructor(private val api: ApiService) : Vie
 
     fun resetActionState() {
         _actionState.value = null
+    }
+
+    suspend fun searchClients(q: String): List<com.balam.crm.data.model.Client> {
+        return try {
+            api.searchClients(q, limit = 10).data
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 }
 

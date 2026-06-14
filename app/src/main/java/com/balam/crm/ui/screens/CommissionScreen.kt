@@ -9,21 +9,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CurrencyRupee
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +54,7 @@ fun CommissionScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val summaryState by viewModel.summaryState.collectAsStateWithLifecycle()
+    val calcState by viewModel.calcState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { BackTopBar(title = "Commission", onBack = onBack) },
@@ -113,6 +123,12 @@ fun CommissionScreen(
                         }
                     }
                     item {
+                        CommissionCalculatorCard(
+                            calcState = calcState,
+                            onCalculate = { policyNo, year -> viewModel.calculateCommission(policyNo, year) }
+                        )
+                    }
+                    item {
                         Text(
                             text = "Commission Entries (${commissions.size})",
                             style = MaterialTheme.typography.titleMedium
@@ -134,6 +150,83 @@ fun CommissionScreen(
                     item { Spacer(Modifier.height(8.dp)) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CommissionCalculatorCard(
+    calcState: UiState<com.balam.crm.data.model.CommissionCalculation>?,
+    onCalculate: (Int, Int) -> Unit
+) {
+    var policyNo by remember { mutableStateOf("") }
+    var year by remember { mutableStateOf("") }
+    val isLoading = calcState is UiState.Loading
+    val policyNoInt = policyNo.trim().toIntOrNull()
+    val yearInt = year.trim().toIntOrNull()
+
+    SectionCard(title = "Commission Calculator") {
+        OutlinedTextField(
+            value = policyNo,
+            onValueChange = { policyNo = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Policy No") },
+            singleLine = true,
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = year,
+            onValueChange = { year = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Year") },
+            singleLine = true,
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = {
+                if (policyNoInt != null && yearInt != null) {
+                    onCalculate(policyNoInt, yearInt)
+                }
+            },
+            enabled = policyNoInt != null && yearInt != null && !isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            } else {
+                Text("Calculate")
+            }
+        }
+        when (calcState) {
+            is UiState.Success -> {
+                val result = calcState.data
+                Spacer(Modifier.height(12.dp))
+                result.baseCommissionPct?.let { InfoRow("Base Commission", "$it%") }
+                result.bonusCommissionPct?.let { InfoRow("Bonus Commission", "$it%") }
+                result.totalPct?.let { InfoRow("Total", "$it%") }
+                result.estimatedCommission?.let { InfoRow("Estimated Commission", formatINR(it)) }
+                if (!result.note.isNullOrBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = result.note,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            is UiState.Error -> {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = calcState.message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            else -> {}
         }
     }
 }

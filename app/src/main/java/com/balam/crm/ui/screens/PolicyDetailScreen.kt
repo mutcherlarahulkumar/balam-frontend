@@ -57,6 +57,7 @@ fun PolicyDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    val multipleDue by viewModel.multipleDue.collectAsStateWithLifecycle()
     var showEditDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(policyNo) {
@@ -199,6 +200,19 @@ fun PolicyDetailScreen(
                                     InfoRow(
                                         formatDate(h.updatedAt),
                                         "${formatDate(h.oldFup)} → ${formatDate(h.newFup)}"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (multipleDue.isNotEmpty()) {
+                        item {
+                            SectionCard(title = "Instalment Arrears") {
+                                multipleDue.forEach { d ->
+                                    InfoRow(
+                                        "Inst. ${d.instalmentNo ?: "—"} · due ${formatDate(d.dueDate)}",
+                                        formatINR(d.amount ?: 0.0),
+                                        emphasize = true
                                     )
                                 }
                             }

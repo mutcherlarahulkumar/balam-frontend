@@ -5,7 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.balam.crm.data.api.ApiService
 import com.balam.crm.data.model.ActivitiesResponse
 import com.balam.crm.data.model.Activity
+import com.balam.crm.data.model.CalendarReportResponse
 import com.balam.crm.data.model.CashInOutResponse
+import com.balam.crm.data.model.CashflowReportResponse
+import com.balam.crm.data.model.RefreshReportsRequest
+import com.balam.crm.data.model.StatusReportResponse
 import com.balam.crm.data.model.Commission
 import com.balam.crm.data.model.CommissionResponse
 import com.balam.crm.data.model.CommissionSummaryResponse
@@ -307,6 +311,53 @@ class ReportsViewModel @Inject constructor(private val api: ApiService) : ViewMo
                 _state.value = UiState.Success(api.getCashInOut())
             } catch (e: Exception) {
                 _state.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    private val _cashflow = MutableStateFlow<UiState<CashflowReportResponse>?>(null)
+    val cashflow: StateFlow<UiState<CashflowReportResponse>?> = _cashflow.asStateFlow()
+
+    private val _statusReport = MutableStateFlow<UiState<StatusReportResponse>?>(null)
+    val statusReport: StateFlow<UiState<StatusReportResponse>?> = _statusReport.asStateFlow()
+
+    private val _calendar = MutableStateFlow<UiState<CalendarReportResponse>?>(null)
+    val calendar: StateFlow<UiState<CalendarReportResponse>?> = _calendar.asStateFlow()
+
+    fun loadFamilyReports(familyCode: String) {
+        viewModelScope.launch {
+            _cashflow.value = UiState.Loading
+            try {
+                _cashflow.value = UiState.Success(api.getCashflowReport(familyCode))
+            } catch (e: Exception) {
+                _cashflow.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+        viewModelScope.launch {
+            _statusReport.value = UiState.Loading
+            try {
+                _statusReport.value = UiState.Success(api.getStatusReport(familyCode))
+            } catch (e: Exception) {
+                _statusReport.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+        viewModelScope.launch {
+            _calendar.value = UiState.Loading
+            try {
+                _calendar.value = UiState.Success(api.getCalendarReport(familyCode))
+            } catch (e: Exception) {
+                _calendar.value = UiState.Error(e.friendlyMessage())
+            }
+        }
+    }
+
+    fun refresh(familyCode: String) {
+        viewModelScope.launch {
+            try {
+                api.refreshReports(RefreshReportsRequest(familyCode))
+                loadFamilyReports(familyCode)
+            } catch (e: Exception) {
+                _cashflow.value = UiState.Error(e.friendlyMessage())
             }
         }
     }

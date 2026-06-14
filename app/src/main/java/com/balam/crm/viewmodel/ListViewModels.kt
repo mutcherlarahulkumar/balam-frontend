@@ -86,6 +86,9 @@ class PolicyDetailViewModel @Inject constructor(private val api: ApiService) : V
     private val _updateState = MutableStateFlow<UiState<MessageResponse>?>(null)
     val updateState: StateFlow<UiState<MessageResponse>?> = _updateState.asStateFlow()
 
+    private val _multipleDue = MutableStateFlow<List<FUPMultipleDueItem>>(emptyList())
+    val multipleDue: StateFlow<List<FUPMultipleDueItem>> = _multipleDue.asStateFlow()
+
     fun load(policyNo: Int) {
         viewModelScope.launch {
             _state.value = UiState.Loading
@@ -93,6 +96,11 @@ class PolicyDetailViewModel @Inject constructor(private val api: ApiService) : V
                 _state.value = UiState.Success(api.getPolicy(policyNo))
             } catch (e: Exception) {
                 _state.value = UiState.Error(e.friendlyMessage())
+            }
+            try {
+                _multipleDue.value = api.getFupMultipleDue(policyNo).data
+            } catch (e: Exception) {
+                _multipleDue.value = emptyList()
             }
         }
     }

@@ -253,12 +253,10 @@ private fun EditClientDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.PhoneField(
                     value = mobile,
                     onValueChange = { mobile = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Mobile") },
-                    singleLine = true,
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
@@ -268,6 +266,10 @@ private fun EditClientDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Email") },
                     singleLine = true,
+                    isError = email.isNotBlank() && !com.balam.crm.ui.components.isValidEmail(email),
+                    supportingText = {
+                        if (email.isNotBlank() && !com.balam.crm.ui.components.isValidEmail(email)) Text("Enter a valid email")
+                    },
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
@@ -338,7 +340,7 @@ private fun EditClientDialog(
                         )
                     )
                 },
-                enabled = !isLoading
+                enabled = !isLoading && (mobile.isEmpty() || mobile.length == 10) && com.balam.crm.ui.components.isValidEmail(email)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

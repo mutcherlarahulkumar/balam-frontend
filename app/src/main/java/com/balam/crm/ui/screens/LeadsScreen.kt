@@ -205,12 +205,11 @@ private fun LeadDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.PhoneField(
                     value = mobile,
                     onValueChange = { mobile = it },
+                    label = "Mobile *",
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Mobile *") },
-                    singleLine = true,
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
@@ -252,7 +251,7 @@ private fun LeadDialog(
                         )
                     )
                 },
-                enabled = name.isNotBlank() && mobile.trim().isNotBlank() && !isLoading
+                enabled = name.isNotBlank() && mobile.length == 10 && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

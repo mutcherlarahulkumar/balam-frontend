@@ -1,6 +1,7 @@
 package com.balam.crm.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.balam.crm.data.model.Client
@@ -71,6 +73,34 @@ fun formatINR(amount: Double): String {
     } catch (e: Exception) {
         "₹" + String.format(Locale.US, "%,.0f", amount)
     }
+}
+
+internal fun isValidEmail(email: String): Boolean = email.isBlank() || Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$").matches(email)
+
+@Composable
+fun PhoneField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String = "Mobile",
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    val isError = value.isNotEmpty() && value.length != 10
+    OutlinedTextField(
+        value = value,
+        onValueChange = {
+            if (it.length <= 10 && it.all { c -> c.isDigit() }) onValueChange(it)
+        },
+        label = { Text(label) },
+        enabled = enabled,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+        isError = isError,
+        supportingText = {
+            if (isError) Text("Enter a valid 10-digit mobile number")
+        },
+        modifier = modifier
+    )
 }
 
 @Composable

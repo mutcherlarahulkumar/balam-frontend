@@ -261,12 +261,10 @@ private fun CreateClientDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                com.balam.crm.ui.components.PhoneField(
                     value = mobile,
                     onValueChange = { mobile = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Mobile") },
-                    singleLine = true,
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
@@ -309,7 +307,7 @@ private fun CreateClientDialog(
                         )
                     )
                 },
-                enabled = familyCode.isNotBlank() && persCode.isNotBlank() && name.isNotBlank() && !isLoading
+                enabled = familyCode.isNotBlank() && persCode.isNotBlank() && name.isNotBlank() && (mobile.isEmpty() || mobile.length == 10) && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

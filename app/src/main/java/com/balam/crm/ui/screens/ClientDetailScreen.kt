@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -40,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.ClientDetail
 import com.balam.crm.data.model.UpdateClientRequest
 import com.balam.crm.ui.components.DateField
+import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.InfoRow
 import com.balam.crm.ui.components.LoadingState
@@ -172,10 +174,10 @@ fun ClientDetailScreen(
                     }
                     if (client.policies.isEmpty()) {
                         item {
-                            Text(
-                                text = "No policies",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            EmptyState(
+                                icon = Icons.Filled.Description,
+                                message = "No policies",
+                                modifier = Modifier.height(160.dp)
                             )
                         }
                     } else {

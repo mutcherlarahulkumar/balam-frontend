@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
@@ -49,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.Client
 import com.balam.crm.data.model.FamilyDetail
 import com.balam.crm.data.model.UpdateFamilyRequest
+import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.InfoRow
 import com.balam.crm.ui.components.LoadingState
@@ -165,10 +167,10 @@ fun FamilyDetailScreen(
                     }
                     if (family.members.isEmpty()) {
                         item {
-                            Text(
-                                text = "No members yet",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            EmptyState(
+                                icon = Icons.Filled.Person,
+                                message = "No members yet",
+                                modifier = Modifier.height(160.dp)
                             )
                         }
                     } else {
@@ -184,10 +186,10 @@ fun FamilyDetailScreen(
                     }
                     if (family.policies.isEmpty()) {
                         item {
-                            Text(
-                                text = "No policies yet",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            EmptyState(
+                                icon = Icons.Filled.Description,
+                                message = "No policies yet",
+                                modifier = Modifier.height(160.dp)
                             )
                         }
                     } else {

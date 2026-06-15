@@ -172,7 +172,7 @@ fun PoliciesScreen(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = 8.dp),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(policies, key = { it.id }) { policy ->

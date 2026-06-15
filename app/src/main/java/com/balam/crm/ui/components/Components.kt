@@ -58,8 +58,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.balam.crm.data.model.Client
+import com.balam.crm.ui.theme.ClaimedPurple
 import com.balam.crm.ui.theme.DangerRed
+import com.balam.crm.ui.theme.LapsedGray
+import com.balam.crm.ui.theme.MaturedBlue
+import com.balam.crm.ui.theme.NeutralSlate
 import com.balam.crm.ui.theme.SuccessGreen
+import com.balam.crm.ui.theme.SurrenderedBrown
 import com.balam.crm.ui.theme.WarningOrange
 import kotlinx.coroutines.delay
 import java.text.NumberFormat
@@ -180,11 +185,11 @@ fun StatusBadge(status: String, modifier: Modifier = Modifier) {
         "IF" -> "In Force" to SuccessGreen
         "LA" -> "Lapsed" to DangerRed
         "PU" -> "Paid Up" to WarningOrange
-        "SU" -> "Surrendered" to Color(0xFF6D4C41)
-        "MA" -> "Matured" to Color(0xFF1565C0)
-        "CL" -> "Claimed" to Color(0xFF6A1B9A)
-        "EX" -> "Expired" to Color(0xFF546E7A)
-        else -> status to Color(0xFF546E7A)
+        "SU" -> "Surrendered" to SurrenderedBrown
+        "MA" -> "Matured" to MaturedBlue
+        "CL" -> "Claimed" to ClaimedPurple
+        "EX" -> "Expired" to NeutralSlate
+        else -> status to NeutralSlate
     }
     Badge(text = label, color = color, modifier = modifier)
 }
@@ -195,8 +200,8 @@ fun FupBadge(fupStatus: String, modifier: Modifier = Modifier) {
         "PAID" -> SuccessGreen
         "DUE" -> WarningOrange
         "OVERDUE" -> DangerRed
-        "LAPSED" -> Color(0xFF78909C)
-        else -> Color(0xFF78909C)
+        "LAPSED" -> LapsedGray
+        else -> LapsedGray
     }
     Badge(text = fupStatus.uppercase(Locale.US), color = color, modifier = modifier)
 }

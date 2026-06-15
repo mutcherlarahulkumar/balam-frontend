@@ -16,6 +16,12 @@ val BgLight = Color(0xFFF0F4F8)
 val SuccessGreen = Color(0xFF2E7D32)
 val WarningOrange = Color(0xFFE65100)
 val DangerRed = Color(0xFFC62828)
+val MaturedBlue = Color(0xFF1565C0)
+val ClaimedPurple = Color(0xFF6A1B9A)
+val SurrenderedBrown = Color(0xFF6D4C41)
+val NeutralSlate = Color(0xFF546E7A)
+val LapsedGray = Color(0xFF78909C)
+val ActivitiesTeal = Color(0xFF00838F)
 
 private val LightColors = lightColorScheme(
     primary = Navy,

@@ -49,8 +49,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.balam.crm.ui.navigation.Routes
+import com.balam.crm.ui.theme.ActivitiesTeal
+import com.balam.crm.ui.theme.ClaimedPurple
 import com.balam.crm.ui.theme.DangerRed
+import com.balam.crm.ui.theme.MaturedBlue
+import com.balam.crm.ui.theme.NeutralSlate
 import com.balam.crm.ui.theme.SuccessGreen
+import com.balam.crm.ui.theme.SurrenderedBrown
 import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.ProfileViewModel
 
@@ -75,11 +80,11 @@ fun MoreScreen(
         MoreItem("Clients", "All client records", Icons.Filled.Person, primary, Routes.CLIENTS),
         MoreItem("Commission", "Earnings & summaries", Icons.Filled.CurrencyRupee, SuccessGreen, Routes.COMMISSION),
         MoreItem("Loans", "Policy loans", Icons.Filled.AccountBalance, WarningOrange, Routes.LOANS),
-        MoreItem("Survival Benefits", "SB dues & payments", Icons.Filled.Savings, Color(0xFF1565C0), Routes.SB),
-        MoreItem("Leads", "Prospects pipeline", Icons.Filled.PersonAdd, Color(0xFF6A1B9A), Routes.LEADS),
-        MoreItem("Activities", "Calls, visits & tasks", Icons.Filled.Event, Color(0xFF00838F), Routes.ACTIVITIES),
-        MoreItem("GST Calculator", "Premium GST breakdown", Icons.Filled.Calculate, Color(0xFF6D4C41), Routes.GST),
-        MoreItem("Reports", "Cash in / out", Icons.Filled.Assessment, Color(0xFF546E7A), Routes.REPORTS),
+        MoreItem("Survival Benefits", "SB dues & payments", Icons.Filled.Savings, MaturedBlue, Routes.SB),
+        MoreItem("Leads", "Prospects pipeline", Icons.Filled.PersonAdd, ClaimedPurple, Routes.LEADS),
+        MoreItem("Activities", "Calls, visits & tasks", Icons.Filled.Event, ActivitiesTeal, Routes.ACTIVITIES),
+        MoreItem("GST Calculator", "Premium GST breakdown", Icons.Filled.Calculate, SurrenderedBrown, Routes.GST),
+        MoreItem("Reports", "Cash in / out", Icons.Filled.Assessment, NeutralSlate, Routes.REPORTS),
         MoreItem("Profile", "Your account details", Icons.Filled.Person, primary, Routes.PROFILE)
     )
 

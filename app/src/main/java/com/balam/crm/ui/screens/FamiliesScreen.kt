@@ -172,7 +172,7 @@ private fun FamilyCard(family: FamilyListItem, onClick: () -> Unit) {
             }
             Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
-                    text = family.headName,
+                    text = family.headName ?: "—",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )

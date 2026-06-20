@@ -70,8 +70,8 @@ data class PolicyListItem(
     val paymentMode: String?,
     val nextPremium: String?,
     val matDate: String?,
-    val status: String,
-    val fupStatus: String,
+    val status: String?,
+    val fupStatus: String?,
     val daysUntilLapse: Int
 )
 
@@ -104,8 +104,8 @@ data class PolicyDetail(
     val relation: String?,
     val agCode: String?,
     val statCd: String?,
-    val status: String,
-    val fupStatus: String,
+    val status: String?,
+    val fupStatus: String?,
     val age: Int?,
     val lastPaid: String?,
     val neft: String?,
@@ -113,9 +113,9 @@ data class PolicyDetail(
     val branch: String?,
     val dab: Int?,
     val termRider: Int?,
-    val fupHistory: List<FUPHistory>,
-    val loans: List<Loan>,
-    val sbRecords: List<SBItem>
+    val fupHistory: List<FUPHistory>?,
+    val loans: List<Loan>?,
+    val sbRecords: List<SBItem>?
 )
 
 data class PoliciesResponse(val data: List<PolicyListItem>, val total: Int, val page: Int, val limit: Int)
@@ -155,7 +155,7 @@ data class UpdatePolicyRequest(
 data class FamilyListItem(
     val id: Int,
     val familyCode: String,
-    val headName: String,
+    val headName: String?,
     val mobile: String?,
     val address: String?,
     val pincode: String?,
@@ -190,7 +190,7 @@ data class UpdateFamilyRequest(
 data class FamilyDetail(
     val id: Int?,
     val familyCode: String,
-    val headName: String,
+    val headName: String?,
     val address: String?,
     val email: String?,
     val mobile: String?,
@@ -198,8 +198,8 @@ data class FamilyDetail(
     val religion: String?,
     val designation: String?,
     val lastUpdate: String?,
-    val members: List<Client>,
-    val policies: List<PolicyListItem>
+    val members: List<Client>?,
+    val policies: List<PolicyListItem>?
 )
 
 data class FamiliesResponse(val data: List<FamilyListItem>, val total: Int, val page: Int, val limit: Int)
@@ -210,7 +210,7 @@ data class Client(
     val id: Int,
     val familyCode: String,
     val persCode: String?,
-    val name: String,
+    val name: String?,
     val mobile: String?,
     val dob: String?,
     val sex: String?,
@@ -252,7 +252,7 @@ data class ClientDetail(
     val id: Int,
     val familyCode: String,
     val persCode: String?,
-    val name: String,
+    val name: String?,
     val mobile: String?,
     val dob: String?,
     val sex: String?,
@@ -265,9 +265,9 @@ data class ClientDetail(
     val source: String?,
     val city: String?,
     val state: String?,
-    val policies: List<PolicyListItem>,
-    val bankDetails: List<BankDetail>,
-    val documents: List<Document>
+    val policies: List<PolicyListItem>?,
+    val bankDetails: List<BankDetail>?,
+    val documents: List<Document>?
 )
 
 data class ClientsResponse(val data: List<Client>, val total: Int, val page: Int, val limit: Int)
@@ -447,10 +447,10 @@ data class CreateLeadRequest(
 data class Activity(
     val id: String,
     val policyNo: Int?,
-    val activityType: String,
+    val activityType: String?,
     val details: String?,
-    val activityDate: String,
-    val status: String
+    val activityDate: String?,
+    val status: String?
 )
 
 data class ActivitiesResponse(val data: List<Activity>)

@@ -120,8 +120,8 @@ fun PolicyDetailScreen(
                 ) {
                     item {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            StatusBadge(status = policy.status)
-                            FupBadge(fupStatus = policy.fupStatus)
+                            StatusBadge(status = policy.status ?: "—")
+                            FupBadge(fupStatus = policy.fupStatus ?: "—")
                         }
                     }
                     item {
@@ -169,10 +169,10 @@ fun PolicyDetailScreen(
                             InfoRow("Status Code", policy.statCd)
                         }
                     }
-                    if (policy.loans.isNotEmpty()) {
+                    if (policy.loans.orEmpty().isNotEmpty()) {
                         item {
-                            SectionCard(title = "Loans (${policy.loans.size})") {
-                                policy.loans.forEach { loan ->
+                            SectionCard(title = "Loans (${policy.loans.orEmpty().size})") {
+                                policy.loans.orEmpty().forEach { loan ->
                                     InfoRow(
                                         "Loan · ${formatDate(loan.loanDate)}",
                                         formatINR(loan.loanAmount.toDouble()),
@@ -182,10 +182,10 @@ fun PolicyDetailScreen(
                             }
                         }
                     }
-                    if (policy.sbRecords.isNotEmpty()) {
+                    if (policy.sbRecords.orEmpty().isNotEmpty()) {
                         item {
-                            SectionCard(title = "Survival Benefits (${policy.sbRecords.size})") {
-                                policy.sbRecords.forEach { sb ->
+                            SectionCard(title = "Survival Benefits (${policy.sbRecords.orEmpty().size})") {
+                                policy.sbRecords.orEmpty().forEach { sb ->
                                     InfoRow(
                                         "Inst. ${sb.instalmentNo} · due ${formatDate(sb.sbDueDate)}",
                                         formatINR(sb.sbAmount) + if (sb.sbPayDate != null) " (paid)" else ""
@@ -194,10 +194,10 @@ fun PolicyDetailScreen(
                             }
                         }
                     }
-                    if (policy.fupHistory.isNotEmpty()) {
+                    if (policy.fupHistory.orEmpty().isNotEmpty()) {
                         item {
                             SectionCard(title = "FUP History") {
-                                policy.fupHistory.forEach { h ->
+                                policy.fupHistory.orEmpty().forEach { h ->
                                     InfoRow(
                                         formatDate(h.updatedAt),
                                         "${formatDate(h.oldFup)} → ${formatDate(h.newFup)}"
@@ -233,12 +233,12 @@ private fun EditPolicyDialog(
     onDismiss: () -> Unit,
     onSubmit: (UpdatePolicyRequest) -> Unit
 ) {
-    var status by remember { mutableStateOf(policy.status) }
+    var status by remember { mutableStateOf(policy.status ?: "") }
     var nominee by remember { mutableStateOf(policy.nominee ?: "") }
     var relation by remember { mutableStateOf(policy.relation ?: "") }
     var neft by remember { mutableStateOf(policy.neft ?: "") }
     var nextPremium by remember { mutableStateOf(policy.nextPremium ?: "") }
-    var fupStatus by remember { mutableStateOf(policy.fupStatus) }
+    var fupStatus by remember { mutableStateOf(policy.fupStatus ?: "") }
 
     val isLoading = updateState is UiState.Loading
     val errorMessage = (updateState as? UiState.Error)?.message

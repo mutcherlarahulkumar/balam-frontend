@@ -161,11 +161,11 @@ fun FamilyDetailScreen(
                     }
                     item {
                         Text(
-                            text = "Members (${family.members.size})",
+                            text = "Members (${family.members.orEmpty().size})",
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-                    if (family.members.isEmpty()) {
+                    if (family.members.orEmpty().isEmpty()) {
                         item {
                             EmptyState(
                                 icon = Icons.Filled.Person,
@@ -174,17 +174,17 @@ fun FamilyDetailScreen(
                             )
                         }
                     } else {
-                        items(family.members, key = { it.id }) { member ->
+                        items(family.members.orEmpty(), key = { it.id }) { member ->
                             MemberCard(member = member, onClick = { onClientClick(member.id) })
                         }
                     }
                     item {
                         Text(
-                            text = "Policies (${family.policies.size})",
+                            text = "Policies (${family.policies.orEmpty().size})",
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-                    if (family.policies.isEmpty()) {
+                    if (family.policies.orEmpty().isEmpty()) {
                         item {
                             EmptyState(
                                 icon = Icons.Filled.Description,
@@ -193,7 +193,7 @@ fun FamilyDetailScreen(
                             )
                         }
                     } else {
-                        items(family.policies, key = { it.id }) { policy ->
+                        items(family.policies.orEmpty(), key = { it.id }) { policy ->
                             PolicyCard(policy = policy, onClick = { onPolicyClick(policy.policyNo) })
                         }
                     }
@@ -225,7 +225,7 @@ private fun MemberCard(member: Client, onClick: () -> Unit) {
             )
             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(
-                    text = member.name,
+                    text = member.name ?: "—",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )

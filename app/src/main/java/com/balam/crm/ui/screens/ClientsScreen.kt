@@ -88,7 +88,7 @@ fun ClientsScreen(
         AlertDialog(
             onDismissRequest = { createdClient = null },
             title = { Text("Client created") },
-            text = { Text("Add a policy for ${client.name} now?") },
+            text = { Text("Add a policy for ${client.name ?: "—"} now?") },
             confirmButton = {
                 TextButton(onClick = {
                     createdClient = null
@@ -183,7 +183,7 @@ private fun ClientCard(client: Client, onClick: () -> Unit) {
             )
             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(
-                    text = client.name,
+                    text = client.name ?: "—",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )

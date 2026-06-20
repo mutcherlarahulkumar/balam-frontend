@@ -141,7 +141,7 @@ fun ClientDetailScreen(
                         item {
                             ShareButtons(
                                 mobile = client.mobile,
-                                message = "Hi ${client.name}, this is regarding your insurance policy. Please contact us for any queries."
+                                message = "Hi ${client.name ?: "—"}, this is regarding your insurance policy. Please contact us for any queries."
                             )
                         }
                     }
@@ -158,7 +158,7 @@ fun ClientDetailScreen(
                     }
                     item {
                         Text(
-                            text = "Policies (${client.policies.size})",
+                            text = "Policies (${client.policies.orEmpty().size})",
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -172,7 +172,7 @@ fun ClientDetailScreen(
                             Text("Add Policy")
                         }
                     }
-                    if (client.policies.isEmpty()) {
+                    if (client.policies.orEmpty().isEmpty()) {
                         item {
                             EmptyState(
                                 icon = Icons.Filled.Description,
@@ -181,14 +181,14 @@ fun ClientDetailScreen(
                             )
                         }
                     } else {
-                        items(client.policies, key = { it.id }) { policy ->
+                        items(client.policies.orEmpty(), key = { it.id }) { policy ->
                             PolicyCard(policy = policy, onClick = { onPolicyClick(policy.policyNo) })
                         }
                     }
-                    if (client.bankDetails.isNotEmpty()) {
+                    if (client.bankDetails.orEmpty().isNotEmpty()) {
                         item {
                             SectionCard(title = "Bank Details") {
-                                client.bankDetails.forEachIndexed { index, bank ->
+                                client.bankDetails.orEmpty().forEachIndexed { index, bank ->
                                     if (index > 0) {
                                         Spacer(Modifier.height(8.dp))
                                         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
@@ -203,10 +203,10 @@ fun ClientDetailScreen(
                             }
                         }
                     }
-                    if (client.documents.isNotEmpty()) {
+                    if (client.documents.orEmpty().isNotEmpty()) {
                         item {
-                            SectionCard(title = "Documents (${client.documents.size})") {
-                                client.documents.forEach { doc ->
+                            SectionCard(title = "Documents (${client.documents.orEmpty().size})") {
+                                client.documents.orEmpty().forEach { doc ->
                                     InfoRow(
                                         doc.title ?: "Document",
                                         doc.policyNo?.let { "Policy $it" } ?: "—"
@@ -229,7 +229,7 @@ private fun EditClientDialog(
     onDismiss: () -> Unit,
     onSubmit: (UpdateClientRequest) -> Unit
 ) {
-    var name by remember { mutableStateOf(client.name) }
+    var name by remember { mutableStateOf(client.name ?: "") }
     var mobile by remember { mutableStateOf(client.mobile ?: "") }
     var email by remember { mutableStateOf(client.email ?: "") }
     var dob by remember { mutableStateOf(client.dob ?: "") }

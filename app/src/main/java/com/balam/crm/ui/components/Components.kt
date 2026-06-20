@@ -470,7 +470,7 @@ fun ClientPickerDialog(
                                 .clickable { onSelected(client) }
                                 .padding(vertical = 10.dp)
                         ) {
-                            Text(text = client.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text(text = client.name ?: "—", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                             Text(
                                 text = "${client.familyCode}${client.mobile?.let { " · $it" } ?: ""}",
                                 style = MaterialTheme.typography.bodySmall,

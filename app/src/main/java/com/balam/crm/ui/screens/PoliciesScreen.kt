@@ -208,7 +208,7 @@ internal fun PolicyCard(policy: PolicyListItem, onClick: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                StatusBadge(status = policy.status)
+                StatusBadge(status = policy.status ?: "—")
             }
             Spacer(Modifier.height(4.dp))
             Text(
@@ -234,7 +234,7 @@ internal fun PolicyCard(policy: PolicyListItem, onClick: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                FupBadge(fupStatus = policy.fupStatus)
+                FupBadge(fupStatus = policy.fupStatus ?: "—")
             }
         }
     }

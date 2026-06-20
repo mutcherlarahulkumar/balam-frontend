@@ -157,7 +157,7 @@ fun ActivitiesScreen(
 
 @Composable
 private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
-    val isDone = activity.status.uppercase(Locale.US) in listOf("DONE", "COMPLETED")
+    val isDone = activity.status?.uppercase(Locale.US) in listOf("DONE", "COMPLETED")
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -171,13 +171,13 @@ private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = activity.activityType,
+                    text = activity.activityType ?: "—",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 Badge(
-                    text = activity.status.uppercase(Locale.US),
+                    text = activity.status?.uppercase(Locale.US) ?: "—",
                     color = if (isDone) SuccessGreen else WarningOrange
                 )
             }

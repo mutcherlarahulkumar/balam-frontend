@@ -180,6 +180,12 @@ fun FUPScreen(
             is UiState.Error -> ErrorState(message = s.message, onRetry = { reload() })
             is UiState.Success -> {
                 val items = s.data.data
+                Text(
+                    text = "Total policies: ${items.size}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
                 if (items.isEmpty()) {
                     EmptyState(icon = Icons.Filled.DateRange, message = "No premiums due. All caught up!")
                 } else {

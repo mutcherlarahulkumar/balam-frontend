@@ -83,6 +83,23 @@ fun formatINR(amount: Double): String {
 internal fun isValidEmail(email: String): Boolean = email.isBlank() || Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$").matches(email)
 
 @Composable
+fun BalamLogo(modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 40.dp) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .background(MaterialTheme.colorScheme.primary, shape = androidx.compose.foundation.shape.CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "B",
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
 fun PhoneField(
     value: String,
     onValueChange: (String) -> Unit,

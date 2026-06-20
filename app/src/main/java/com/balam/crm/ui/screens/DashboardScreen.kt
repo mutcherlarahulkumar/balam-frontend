@@ -82,17 +82,21 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
-                            Text(
-                                text = "Hello, ${data.agentName}",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Here's your business at a glance",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            com.balam.crm.ui.components.BalamLogo()
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Hello, ${data.agentName}",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Here's your business at a glance",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                         IconButton(onClick = { ThemeState.toggle(context) }) {
                             Icon(

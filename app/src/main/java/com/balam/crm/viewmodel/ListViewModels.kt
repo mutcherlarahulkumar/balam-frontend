@@ -20,6 +20,7 @@ import com.balam.crm.data.model.MessageResponse
 import com.balam.crm.data.model.Plan
 import com.balam.crm.data.model.PoliciesResponse
 import com.balam.crm.data.model.PolicyDetail
+import com.balam.crm.data.model.RefreshReportsRequest
 import com.balam.crm.data.model.UpdateClientRequest
 import com.balam.crm.data.model.UpdateFamilyRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,12 +52,18 @@ class PoliciesViewModel @Inject constructor(private val api: ApiService) : ViewM
         }
     }
 
-    fun load(search: String? = null, status: String? = null) {
+    fun load(search: String? = null, status: String? = null, fupStatus: String? = null) {
         viewModelScope.launch {
             _state.value = UiState.Loading
             try {
                 _state.value = UiState.Success(
-                    api.getPolicies(page = 1, limit = 100, search = search?.takeIf { it.isNotBlank() }, status = status)
+                    api.getPolicies(
+                        page = 1,
+                        limit = 100,
+                        search = search?.takeIf { it.isNotBlank() },
+                        status = status,
+                        fupStatus = fupStatus
+                    )
                 )
             } catch (e: Exception) {
                 _state.value = UiState.Error(e.friendlyMessage())
@@ -113,6 +120,14 @@ class PolicyDetailViewModel @Inject constructor(private val api: ApiService) : V
             _updateState.value = UiState.Loading
             try {
                 _updateState.value = UiState.Success(api.updatePolicy(policyNo, request))
+                val familyCode = (_state.value as? UiState.Success)?.data?.familyCode
+                if (!familyCode.isNullOrBlank()) {
+                    try {
+                        api.refreshReports(RefreshReportsRequest(familyCode))
+                    } catch (e: Exception) {
+                        // refresh failure shouldn't break the update flow
+                    }
+                }
             } catch (e: Exception) {
                 _updateState.value = UiState.Error(e.friendlyMessage())
             }

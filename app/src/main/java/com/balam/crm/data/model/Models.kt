@@ -72,7 +72,8 @@ data class PolicyListItem(
     val matDate: String?,
     val status: String?,
     val fupStatus: String?,
-    val daysUntilLapse: Int
+    val daysUntilLapse: Int,
+    val premiumEndDate: String? = null
 )
 
 data class FUPHistory(
@@ -115,7 +116,20 @@ data class PolicyDetail(
     val termRider: Int?,
     val fupHistory: List<FUPHistory>?,
     val loans: List<Loan>?,
-    val sbRecords: List<SBItem>?
+    val sbRecords: List<SBItem>?,
+    val premiumEndDate: String? = null,
+    val planDetails: PlanDetails? = null
+)
+
+data class PlanDetails(
+    val planNo: String?,
+    val planName: String?,
+    val planType: String?,
+    val termPpt: String?,
+    val sbSchedule: List<Double>?,
+    val stax: Double?,
+    val lapsDays: Int?,
+    val gstRates: List<Double>?
 )
 
 data class PoliciesResponse(val data: List<PolicyListItem>, val total: Int, val page: Int, val limit: Int)
@@ -515,3 +529,24 @@ data class CalendarReportItem(
 data class CalendarReportResponse(val data: List<CalendarReportItem>)
 
 data class RefreshReportsRequest(val familyCode: String)
+
+// ---------- Global search ----------
+
+data class GlobalSearchResponse(
+    val families: List<FamilyListItem>,
+    val clients: List<Client>,
+    val policies: List<PolicyListItem>
+)
+
+// ---------- Dashboard ----------
+
+data class DashboardPreview<T>(val total: Int, val preview: List<T>)
+
+data class DashboardResponse(
+    val duePremiums: DashboardPreview<FUPDueItem>,
+    val todayActivities: List<Activity>,
+    val commissionThisMonth: CommissionMonthSummary?,
+    val unpaidSB: DashboardPreview<SBItem>,
+    val leads: DashboardPreview<Lead>,
+    val lapsingPolicies: DashboardPreview<PolicyListItem>
+)

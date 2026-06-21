@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,10 +27,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -210,6 +216,51 @@ private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
     }
 }
 
+private val activityTypeOptions = listOf("CALL", "MEETING", "DEMO", "EMAIL", "PROPOSAL", "MEDICAL", "REMINDER")
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ActivityTypeDropdownField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    enabled: Boolean
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = it }
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            label = { Text("Type *") },
+            singleLine = true,
+            enabled = enabled,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = 280.dp)
+        ) {
+            activityTypeOptions.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun CreateActivityDialog(
     actionState: UiState<*>?,
@@ -250,12 +301,9 @@ private fun CreateActivityDialog(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                ActivityTypeDropdownField(
                     value = activityType,
                     onValueChange = { activityType = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Type (CALL, MEETING, DEMO, EMAIL, PROPOSAL, MEDICAL, REMINDER) *") },
-                    singleLine = true,
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))

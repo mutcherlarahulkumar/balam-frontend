@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,9 +20,14 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -140,6 +146,7 @@ fun PolicyDetailScreen(
                             InfoRow("Issue Date", formatDate(policy.issueDate))
                             InfoRow("Maturity Date", formatDate(policy.matDate))
                             InfoRow("Next Premium", formatDate(policy.nextPremium))
+                            InfoRow("Premium ends", formatDate(policy.premiumEndDate))
                             InfoRow("Last Paid", formatDate(policy.lastPaid))
                             InfoRow("Last FUP", formatDate(policy.lastFup))
                         }
@@ -226,6 +233,58 @@ fun PolicyDetailScreen(
     }
 }
 
+private val editStatusOptions = listOf("IF", "LA", "PU", "SU", "MA", "CL", "EX")
+private val editFupStatusOptions = listOf("PAID", "DUE", "OVERDUE", "LAPSED")
+
+/**
+ * Simple constrained dropdown field. Mirrors the [PlanPickerField] ExposedDropdownMenuBox
+ * pattern but with a fixed, non-editable option list.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SimpleDropdownField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    options: List<String>,
+    label: String,
+    enabled: Boolean
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = it }
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            label = { Text(label) },
+            singleLine = true,
+            enabled = enabled,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = 280.dp)
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun EditPolicyDialog(
     policy: PolicyDetail,
@@ -248,13 +307,11 @@ private fun EditPolicyDialog(
         title = { Text("Edit Policy ${policy.policyNo}") },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
-                OutlinedTextField(
+                SimpleDropdownField(
                     value = status,
                     onValueChange = { status = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Status") },
-                    placeholder = { Text("IF/LA/PU/SU/MA") },
-                    singleLine = true,
+                    options = editStatusOptions,
+                    label = "Status",
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
@@ -292,13 +349,11 @@ private fun EditPolicyDialog(
                     enabled = !isLoading
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                SimpleDropdownField(
                     value = fupStatus,
                     onValueChange = { fupStatus = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("FUP Status") },
-                    placeholder = { Text("PAID/DUE/OVERDUE/LAPSED") },
-                    singleLine = true,
+                    options = editFupStatusOptions,
+                    label = "FUP Status",
                     enabled = !isLoading
                 )
                 if (errorMessage != null) {

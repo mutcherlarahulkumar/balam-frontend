@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -98,11 +99,19 @@ fun DashboardScreen(
                                 )
                             }
                         }
-                        IconButton(onClick = { ThemeState.toggle(context) }) {
-                            Icon(
-                                imageVector = if (isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
-                                contentDescription = "Toggle theme"
-                            )
+                        Row {
+                            IconButton(onClick = { onNavigate(Routes.SEARCH) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = "Search"
+                                )
+                            }
+                            IconButton(onClick = { ThemeState.toggle(context) }) {
+                                Icon(
+                                    imageVector = if (isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                                    contentDescription = "Toggle theme"
+                                )
+                            }
                         }
                     }
                 }
@@ -148,22 +157,7 @@ fun DashboardScreen(
                     }
                 }
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Urgent follow-ups",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "View all",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable { onNavigate(Routes.FUP) }
-                        )
-                    }
+                    DashboardSectionHeader("Urgent follow-ups") { onNavigate(Routes.FUP) }
                 }
                 if (data.urgentFups.isEmpty()) {
                     item {
@@ -186,6 +180,123 @@ fun DashboardScreen(
                         UrgentFupCard(fup = fup, onClick = { onPolicyClick(fup.policyNo) })
                     }
                 }
+                if (data.lapsingPoliciesPreview.isNotEmpty()) {
+                    item {
+                        DashboardSectionHeader("Lapsing within 15 days · ${data.lapsingPoliciesCount}") {
+                            onNavigate(Routes.POLICIES)
+                        }
+                    }
+                    items(data.lapsingPoliciesPreview, key = { "lapsing-${it.policyNo}" }) { policy ->
+                        SimpleInfoCard(
+                            title = policy.clientName,
+                            subtitle = "Policy ${policy.policyNo} · ${policy.planName ?: "—"}",
+                            trailing = { Badge(text = "${policy.daysUntilLapse}d left", color = DangerRed) },
+                            onClick = { onPolicyClick(policy.policyNo) }
+                        )
+                    }
+                }
+                if (data.unpaidSBPreview.isNotEmpty()) {
+                    item {
+                        DashboardSectionHeader("Unpaid survival benefits · ${data.unpaidSBCount}") {
+                            onNavigate(Routes.SB)
+                        }
+                    }
+                    items(data.unpaidSBPreview, key = { "sb-${it.id}" }) { sb ->
+                        SimpleInfoCard(
+                            title = sb.clientName,
+                            subtitle = "Policy ${sb.policyNo} · due ${formatDate(sb.sbDueDate)}",
+                            trailing = {
+                                Text(
+                                    text = formatINR(sb.sbAmount),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            onClick = { onNavigate(Routes.SB) }
+                        )
+                    }
+                }
+                if (data.leadsPreview.isNotEmpty()) {
+                    item {
+                        DashboardSectionHeader("New leads · ${data.leadsCount}") {
+                            onNavigate(Routes.LEADS)
+                        }
+                    }
+                    items(data.leadsPreview, key = { "lead-${it.id}" }) { lead ->
+                        SimpleInfoCard(
+                            title = lead.name,
+                            subtitle = lead.mobile ?: "—",
+                            onClick = { onNavigate(Routes.LEADS) }
+                        )
+                    }
+                }
+                if (data.todayActivities.isNotEmpty()) {
+                    item {
+                        DashboardSectionHeader("Today's activities · ${data.todayActivities.size}") {
+                            onNavigate(Routes.ACTIVITIES)
+                        }
+                    }
+                    items(data.todayActivities, key = { "activity-${it.id}" }) { activity ->
+                        SimpleInfoCard(
+                            title = activity.activityType ?: "—",
+                            subtitle = activity.details?.takeIf { it.isNotBlank() } ?: formatDate(activity.activityDate),
+                            onClick = { onNavigate(Routes.ACTIVITIES) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardSectionHeader(title: String, onViewAll: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = "View all",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clickable(onClick = onViewAll)
+        )
+    }
+}
+
+@Composable
+private fun SimpleInfoCard(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (trailing != null) {
+                Spacer(Modifier.width(12.dp))
+                trailing()
             }
         }
     }

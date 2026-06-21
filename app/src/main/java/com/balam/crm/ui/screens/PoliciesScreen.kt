@@ -76,7 +76,18 @@ private val statusFilters = listOf(
     "IF" to "In Force",
     "LA" to "Lapsed",
     "PU" to "Paid Up",
-    "MA" to "Matured"
+    "SU" to "Surrendered",
+    "MA" to "Matured",
+    "CL" to "Claim",
+    "EX" to "Expired"
+)
+
+private val fupStatusFilters = listOf(
+    null to "All",
+    "PAID" to "Paid",
+    "DUE" to "Due",
+    "OVERDUE" to "Overdue",
+    "LAPSED" to "Lapsed"
 )
 
 @Composable
@@ -89,22 +100,23 @@ fun PoliciesScreen(
     val plans by viewModel.plans.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var status by rememberSaveable { mutableStateOf<String?>(null) }
+    var fupStatus by rememberSaveable { mutableStateOf<String?>(null) }
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadPlans()
     }
 
-    LaunchedEffect(query, status) {
+    LaunchedEffect(query, status, fupStatus) {
         if (query.isNotEmpty()) delay(400)
-        viewModel.load(search = query, status = status)
+        viewModel.load(search = query, status = status, fupStatus = fupStatus)
     }
 
     LaunchedEffect(createState) {
         if (createState is UiState.Success) {
             showCreateDialog = false
             viewModel.resetCreateState()
-            viewModel.load(search = query, status = status)
+            viewModel.load(search = query, status = status, fupStatus = fupStatus)
         }
     }
 
@@ -160,11 +172,24 @@ fun PoliciesScreen(
                 )
             }
         }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            fupStatusFilters.forEach { (code, label) ->
+                FilterChip(
+                    selected = fupStatus == code,
+                    onClick = { fupStatus = code },
+                    label = { Text(label) }
+                )
+            }
+        }
         Spacer(Modifier.height(4.dp))
 
         when (val s = state) {
             is UiState.Loading -> LoadingState()
-            is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load(query, status) })
+            is UiState.Error -> ErrorState(message = s.message, onRetry = { viewModel.load(query, status, fupStatus) })
             is UiState.Success -> {
                 val policies = s.data.data
                 if (policies.isEmpty()) {

@@ -45,7 +45,8 @@ interface ApiService {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20,
         @Query("search") search: String? = null,
-        @Query("status") status: String? = null
+        @Query("status") status: String? = null,
+        @Query("fupStatus") fupStatus: String? = null
     ): PoliciesResponse
 
     @POST("policies")
@@ -204,4 +205,12 @@ interface ApiService {
 
     @POST("reports/refresh")
     suspend fun refreshReports(@Body body: RefreshReportsRequest): MessageResponse
+
+    // Global search
+    @GET("search")
+    suspend fun globalSearch(@Query("q") q: String): GlobalSearchResponse
+
+    // Dashboard
+    @GET("dashboard")
+    suspend fun getDashboard(): DashboardResponse
 }

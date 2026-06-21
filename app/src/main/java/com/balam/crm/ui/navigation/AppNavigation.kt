@@ -47,6 +47,7 @@ import com.balam.crm.ui.screens.ProfileScreen
 import com.balam.crm.ui.screens.RegisterScreen
 import com.balam.crm.ui.screens.ReportsScreen
 import com.balam.crm.ui.screens.SBScreen
+import com.balam.crm.ui.screens.SearchScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -66,6 +67,7 @@ object Routes {
     const val REPORTS = "reports"
     const val PROFILE = "profile"
     const val POLICY_NEW = "policy/new"
+    const val SEARCH = "search"
 
     fun policyDetail(policyNo: Int) = "policy/$policyNo"
     fun familyDetail(familyCode: String) = "family/$familyCode"
@@ -207,6 +209,14 @@ fun AppNavigation(tokenStore: TokenStore) {
                     onBack = { navController.popBackStack() },
                     onPolicyClick = { navController.navigate(Routes.policyDetail(it)) },
                     onAddPolicy = { fc, pc -> navController.navigate(Routes.createPolicy(fc, pc)) }
+                )
+            }
+            composable(Routes.SEARCH) {
+                SearchScreen(
+                    onBack = { navController.popBackStack() },
+                    onFamilyClick = { navController.navigate(Routes.familyDetail(it)) },
+                    onClientClick = { navController.navigate(Routes.clientDetail(it)) },
+                    onPolicyClick = { navController.navigate(Routes.policyDetail(it)) }
                 )
             }
             composable(Routes.COMMISSION) {

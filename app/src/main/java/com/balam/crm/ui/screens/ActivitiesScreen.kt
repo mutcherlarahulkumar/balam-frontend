@@ -56,10 +56,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.Activity
 import com.balam.crm.data.model.CreateActivityRequest
+import com.balam.crm.ui.components.AccentCard
 import com.balam.crm.ui.components.Badge
 import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.SegmentedToggle
+import com.balam.crm.ui.components.activityTypeColor
 import com.balam.crm.ui.theme.SuccessGreen
 import com.balam.crm.ui.theme.WarningOrange
 import com.balam.crm.viewmodel.ActivitiesViewModel
@@ -103,18 +106,11 @@ fun ActivitiesScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = todayOnly,
-                    onClick = { todayOnly = true },
-                    label = { Text("Today") }
-                )
-                FilterChip(
-                    selected = !todayOnly,
-                    onClick = { todayOnly = false },
-                    label = { Text("All") }
-                )
-            }
+            SegmentedToggle(
+                options = listOf(true to "Today", false to "All"),
+                selected = todayOnly,
+                onSelect = { todayOnly = it }
+            )
             Spacer(Modifier.height(4.dp))
 
             when (val s = state) {
@@ -164,26 +160,18 @@ fun ActivitiesScreen(
 @Composable
 private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
     val isDone = activity.status?.uppercase(Locale.US) in listOf("DONE", "COMPLETED")
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    AccentCard(accentColor = activityTypeColor(activity.activityType)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Badge(text = activity.activityType ?: "—", color = activityTypeColor(activity.activityType))
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = activity.activityType ?: "—",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                Badge(
                     text = activity.status?.uppercase(Locale.US) ?: "—",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = if (isDone) SuccessGreen else WarningOrange
                 )
             }
@@ -207,12 +195,11 @@ private fun ActivityCard(activity: Activity, onMarkDone: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onMarkDone) {
+                    Button(onClick = onMarkDone) {
                         Text("Mark Done")
                     }
                 }
             }
-        }
     }
 }
 

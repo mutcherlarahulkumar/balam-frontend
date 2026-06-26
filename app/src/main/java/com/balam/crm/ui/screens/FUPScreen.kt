@@ -52,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.FUPDueItem
 import com.balam.crm.data.model.FUPUpdateRequest
+import com.balam.crm.ui.components.AccentCard
 import com.balam.crm.ui.components.Badge
 import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
@@ -232,15 +233,10 @@ fun FUPScreen(
 @Composable
 private fun FupCard(fup: FUPDueItem, onClick: () -> Unit, onUpdate: () -> Unit) {
     val overdue = fup.daysOverdue > 0
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    AccentCard(
+        accentColor = if (overdue) DangerRed else WarningOrange,
+        onClick = onClick
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -300,7 +296,6 @@ private fun FupCard(fup: FUPDueItem, onClick: () -> Unit, onUpdate: () -> Unit) 
                 }
                 ShareButtons(mobile = fup.mobile, message = message)
             }
-        }
     }
 }
 

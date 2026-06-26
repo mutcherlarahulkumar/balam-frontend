@@ -42,10 +42,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.MarkSBPaidRequest
 import com.balam.crm.data.model.SBItem
+import com.balam.crm.ui.components.AccentCard
 import com.balam.crm.ui.components.Badge
 import com.balam.crm.ui.components.EmptyState
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.LoadingState
+import com.balam.crm.ui.components.SegmentedToggle
 import com.balam.crm.ui.components.formatINR
 import com.balam.crm.ui.theme.SuccessGreen
 import com.balam.crm.ui.theme.WarningOrange
@@ -84,18 +86,11 @@ fun SBScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = unpaidOnly,
-                    onClick = { unpaidOnly = true },
-                    label = { Text("Unpaid") }
-                )
-                FilterChip(
-                    selected = !unpaidOnly,
-                    onClick = { unpaidOnly = false },
-                    label = { Text("All") }
-                )
-            }
+            SegmentedToggle(
+                options = listOf(true to "Unpaid", false to "All"),
+                selected = unpaidOnly,
+                onSelect = { unpaidOnly = it }
+            )
             Spacer(Modifier.height(4.dp))
 
             when (val s = state) {
@@ -142,13 +137,7 @@ fun SBScreen(
 @Composable
 private fun SBCard(sb: SBItem, onMarkPaid: () -> Unit) {
     val paid = sb.sbPayDate != null
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    AccentCard(accentColor = if (paid) SuccessGreen else WarningOrange) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -191,12 +180,11 @@ private fun SBCard(sb: SBItem, onMarkPaid: () -> Unit) {
                     )
                 }
                 if (!paid) {
-                    TextButton(onClick = onMarkPaid) {
+                    Button(onClick = onMarkPaid) {
                         Text("Mark Paid")
                     }
                 }
             }
-        }
     }
 }
 

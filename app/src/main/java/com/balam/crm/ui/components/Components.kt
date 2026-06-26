@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,7 +39,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -58,10 +63,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.balam.crm.data.model.Client
+import com.balam.crm.ui.theme.ActivitiesTeal
 import com.balam.crm.ui.theme.ClaimedPurple
 import com.balam.crm.ui.theme.DangerRed
 import com.balam.crm.ui.theme.LapsedGray
 import com.balam.crm.ui.theme.MaturedBlue
+import com.balam.crm.ui.theme.NavyLight
 import com.balam.crm.ui.theme.NeutralSlate
 import com.balam.crm.ui.theme.SuccessGreen
 import com.balam.crm.ui.theme.SurrenderedBrown
@@ -223,6 +230,62 @@ fun FupBadge(fupStatus: String, modifier: Modifier = Modifier) {
     Badge(text = fupStatus.uppercase(Locale.US), color = color, modifier = modifier)
 }
 
+fun activityTypeColor(type: String?): Color = when (type?.uppercase(Locale.US)) {
+    "CALL" -> MaturedBlue
+    "MEETING" -> SuccessGreen
+    "DEMO" -> ActivitiesTeal
+    "EMAIL" -> NavyLight
+    "PROPOSAL" -> ClaimedPurple
+    "MEDICAL" -> DangerRed
+    "REMINDER" -> WarningOrange
+    else -> NeutralSlate
+}
+
+@Composable
+fun AccentCard(
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = (if (onClick != null) modifier.clickable(onClick = onClick) else modifier).fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(accentColor)
+            )
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth(), content = content)
+        }
+    }
+}
+
+@Composable
+fun <T> SegmentedToggle(
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    SingleChoiceSegmentedButtonRow(modifier = modifier) {
+        options.forEachIndexed { index, (value, label) ->
+            SegmentedButton(
+                selected = selected == value,
+                onClick = { onSelect(value) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
+            ) {
+                Text(label)
+            }
+        }
+    }
+}
+
 @Composable
 fun StatCard(
     title: String,
@@ -235,7 +298,7 @@ fun StatCard(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Box(
@@ -290,7 +353,7 @@ fun SectionCard(title: String, modifier: Modifier = Modifier, content: @Composab
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

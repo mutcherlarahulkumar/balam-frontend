@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balam.crm.data.model.FUPDueItem
+import com.balam.crm.ui.components.AccentCard
 import com.balam.crm.ui.components.Badge
 import com.balam.crm.ui.components.ErrorState
 import com.balam.crm.ui.components.LoadingState
@@ -316,16 +317,11 @@ private fun QuickActionChip(label: String, icon: ImageVector, onClick: () -> Uni
 @Composable
 private fun UrgentFupCard(fup: FUPDueItem, onClick: () -> Unit) {
     val overdue = fup.daysOverdue > 0
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    AccentCard(
+        accentColor = if (overdue) DangerRed else WarningOrange,
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
